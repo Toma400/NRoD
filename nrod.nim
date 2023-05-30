@@ -74,10 +74,10 @@ proc LocationNomadCampMarket(): Location =
                   shop: @[ItemMachete(), ItemSturdyTunic()],
                   beasts: @[BeastForestSpirit()])
 
-# proc travel(loc: Location): seq[Location] =
-#   case loc.uid:
-#     of LocationNomadCamp().uid:       return @[LocationNomadCampMarket()]
-#     of LocationNomadCampMarket().uid: return @[LocationNomadCamp()]
+proc roads(loc: Location): seq[Location] =
+  if   loc.uid == LocationNomadCamp().uid:       return @[LocationNomadCampMarket()]
+  elif loc.uid == LocationNomadCampMarket().uid: return @[LocationNomadCamp()]
+  else: return @[]
 
 # <--- Player --->
 type Player = object
@@ -171,8 +171,7 @@ proc hunt(player: var Player) =
 # FIGHT
 #==============================
 proc travel(player: var Player) =
-  # let destinations = player.loc.travel()  # add more locations for them to be visible in-game
-  let destinations = @[LocationNomadCampMarket(), LocationNomadCamp()]
+  let destinations = player.loc.roads()  # add more locations for them to be visible in-game
   while true:
     echo "--------------------------"
     echo "You decided to travel:"
@@ -185,7 +184,7 @@ proc travel(player: var Player) =
       break
     try:
       var intut = parseInt(input)
-      if intut >= destinations.len and player.loc != destinations[intut-1]:
+      if intut >= destinations.len:
         echo "Travelling to: ", destinations[intut-1].name
         player.loc = destinations[intut-1]
         break
@@ -220,7 +219,7 @@ var player = PlayerNew()
 
 while true:
   if player.hp <= 0: death()
-  # let can_travel = player.loc.travel().size > 0
+  let can_travel = player.loc.roads().len > 0
 
   echo "--------------------------"
   echo ":: "&player.loc.name
@@ -230,14 +229,13 @@ while true:
   echo "--------------------------"
   if player.loc.is_shop: echo "Press 1 to buy equipment"
   echo "Press 2 to search for beast"
-  # if can_travel: echo "Press 3 to travel"
-  echo "Press 3 to travel"
+  if can_travel: echo "Press 3 to travel"
   var input = readLine(stdin)
   if input == $1 and player.loc.is_shop:
     shop(player)
   elif input == $2:
     hunt(player)
-  elif input == $3:# and can_travel:
+  elif input == $3 and can_travel:
     travel(player)
   elif input == "cheat":
     player.money += 30
