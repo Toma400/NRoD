@@ -23,6 +23,7 @@ let nrod_v = "0.1" # version
 
 # - collab with Kari? (rybiczki-mutanty)
 
+if not dirExists("saves"): createDir("saves")
 echo "«¤÷==========÷¤.__.¤÷==========÷¤»"
 
 # <--- Item --->
@@ -49,34 +50,41 @@ type Beast = object
 # You can add new beasts here (used in **Location in 'beasts' list)
 proc BeastGhoul(): Beast =
   return Beast(name: "Ghoul", hp: rand(30..50), att: rand(1..5), def: rand(1..3))
-proc BeastForestSpirit(): Beast =
-  return Beast(name: "Forest Spirit", hp: rand(20..35), att: rand(3..6), def: rand(5..9))
 
 # <--- Location --->
 type Location = object
   name:    string
   uid:     string      # unique ID (used for saves)
   is_shop: bool
-  shop:    seq[Item]
-  beasts:  seq[Beast]
 #-----------------
 # You can add new locations here (used in *Travel in initial destination list)
 proc LocationNomadCamp(): Location =
   return Location(name: "Nomad Camp",
                   uid: "nr_nomad_camp",
-                  is_shop: false,
-                  shop: @[],
-                  beasts: @[BeastGhoul()])
+                  is_shop: false)
 proc LocationNomadCampMarket(): Location =
   return Location(name: "Nomad Camp Market",
                   uid: "nr_nomad_camp_market",
-                  is_shop: true,
-                  shop: @[ItemMachete(), ItemSturdyTunic()],
-                  beasts: @[BeastForestSpirit()])
+                  is_shop: true)
+proc LocationWastes(): Location = # non-accessible yet
+  return Location(name: "Wastes",
+                  uid: "nr_wastes",
+                  is_shop: false)
 
+# shops in locations
+proc shop(loc: Location): seq[Item] =
+  if loc.uid == LocationNomadCampMarket().uid: return @[ItemMachete(), ItemSturdyTunic()]
+  else: return @[]
+
+# travelling roads to locations
 proc roads(loc: Location): seq[Location] =
-  if   loc.uid == LocationNomadCamp().uid:       return @[LocationNomadCampMarket()]
+  if   loc.uid == LocationNomadCamp().uid:       return @[LocationNomadCampMarket(), LocationWastes()]
   elif loc.uid == LocationNomadCampMarket().uid: return @[LocationNomadCamp()]
+  elif loc.uid == LocationWastes().uid:          return @[LocationNomadCamp()]
+  else: return @[]
+
+proc beasts(loc: Location): seq[Beast] =
+  if loc.uid == LocationWastes().uid: return @[BeastGhoul()]
   else: return @[]
 
 # <--- Player --->
@@ -116,7 +124,7 @@ proc buy(player: var Player, item: Item) =
     echo "You don't have enough money for that!"
 
 proc shop(player: var Player) =
-  let shop_contents = player.loc.shop # add more contents for them to be visible in-game
+  let shop_contents = player.loc.shop() # add more contents for them to be visible in-game
   while true:
     echo "--------------------------"
     for item in shop_contents:
@@ -140,7 +148,7 @@ proc shop(player: var Player) =
 # FIGHT
 #==============================
 proc hunt(player: var Player) =
-  var monster = sample(player.loc.beasts)
+  var monster = sample(player.loc.beasts())
   echo "You start the fight with: ", monster.name, ". Be ready!"
   echo "If you want to flee, use 'x' key"
   sleep 2000
@@ -219,7 +227,9 @@ var player = PlayerNew()
 
 while true:
   if player.hp <= 0: death()
+  let can_shop   = player.loc.is_shop
   let can_travel = player.loc.roads().len > 0
+  let can_hunt   = player.loc.beasts().len > 0
 
   echo "--------------------------"
   echo ":: "&player.loc.name
@@ -227,9 +237,10 @@ while true:
   echo "HP: ", $player.hp, " | $: ", $player.money
   echo "§: ", $player.att, " | ¤: ", $player.def
   echo "--------------------------"
-  if player.loc.is_shop: echo "Press 1 to buy equipment"
-  echo "Press 2 to search for beast"
+  if can_shop:   echo "Press 1 to buy equipment"
+  if can_hunt:   echo "Press 2 to search for beast"
   if can_travel: echo "Press 3 to travel"
+  #---------------------------
   var input = readLine(stdin)
   if input == $1 and player.loc.is_shop:
     shop(player)
