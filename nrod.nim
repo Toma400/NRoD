@@ -10,7 +10,6 @@ import os
 let nrod_v = "0.1" # version
 
 # TODO:
-# - making it post-apo
 # - making wider options for items?
 #   - ranged, but has ammo which needs to be bought
 #   - melee, just as it was
@@ -33,12 +32,15 @@ type Item = object
   cost: int
   att:  int
   def:  int
+  eff:  bool
 #-----------------
 # You can add new items here (used in *Shop in initial list of contents)
 proc ItemMachete(): Item =
-  return Item(name: "Machete", uid: "nr_machete", cost: 20, att: 5, def: 0)
+  return Item(name: "Machete", uid: "nr_machete", cost: 20, att: 5, def: 0, eff: false)
 proc ItemSturdyTunic(): Item =
-  return Item(name: "Sturdy Tunic", uid: "nr_sturdy_tunic", cost: 30, att: 0, def: 3)
+  return Item(name: "Sturdy Tunic", uid: "nr_sturdy_tunic", cost: 30, att: 0, def: 3, eff: false)
+proc ItemSmallHealingPotion(): Item =
+  return Item(name: "Small Healing Potion", uid: "nr_small_healing_potion", cost: 10, att: 0, def: 0, eff: true)
 
 # <--- Beast --->
 type Beast = object
@@ -66,14 +68,14 @@ proc LocationNomadCampMarket(): Location =
   return Location(name: "Nomad Camp Market",
                   uid: "nr_nomad_camp_market",
                   is_shop: true)
-proc LocationWastes(): Location = # non-accessible yet
+proc LocationWastes(): Location =
   return Location(name: "Wastes",
                   uid: "nr_wastes",
                   is_shop: false)
 
 # shops in locations
 proc shop(loc: Location): seq[Item] =
-  if loc.uid == LocationNomadCampMarket().uid: return @[ItemMachete(), ItemSturdyTunic()]
+  if loc.uid == LocationNomadCampMarket().uid: return @[ItemMachete(), ItemSturdyTunic(), ItemSmallHealingPotion()]
   else: return @[]
 
 # travelling roads to locations
@@ -83,6 +85,7 @@ proc roads(loc: Location): seq[Location] =
   elif loc.uid == LocationWastes().uid:          return @[LocationNomadCamp()]
   else: return @[]
 
+# list of beasts in locations
 proc beasts(loc: Location): seq[Beast] =
   if loc.uid == LocationWastes().uid: return @[BeastGhoul()]
   else: return @[]
@@ -101,6 +104,9 @@ proc addToInv(self: var Player, item: Item) =
   self.inv.add(item)
   self.att += item.att
   self.def += item.def
+proc use(player: var Player, item: Item) =
+  if item.eff:
+    if item.uid == ItemSmallHealingPotion().uid: player.hp = player.hp + 15
 
 #==============================
 # MAIN EVENTS
@@ -119,6 +125,8 @@ proc buy(player: var Player, item: Item) =
     player.money -= item.cost
     addToInv(player, item)
     echo "Bought ", item.name, "!"
+    if item.eff:
+      player.use(item)
     sleep 2000
   else:
     echo "You don't have enough money for that!"
@@ -192,7 +200,7 @@ proc travel(player: var Player) =
       break
     try:
       var intut = parseInt(input)
-      if intut >= destinations.len:
+      if intut <= destinations.len and intut > 0:
         echo "Travelling to: ", destinations[intut-1].name
         player.loc = destinations[intut-1]
         break
