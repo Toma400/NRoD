@@ -3,38 +3,44 @@ import strutils
 import os
 
 #----------------------------------------------
-# NIMROD game (Nim-Risk-of-Death)
+# NROD game (Near-Risk-of-Death)
 # ---
 # (c) 2023 Tomasz Stępień, All Rights Reserved
-# ---
-# You can freely append new elements through
-# Nimrod expandable system via source code
-# (items, mobs, locations). See notes below.
-#
-# *  means proc/function
-# ** means object
+#----------------------------------------------
+nrod_v = "0.1" # version
 
-# TODO
-# - save system (.bat file passing args?)
-# - getting loc list and item list by JSON/YAML?
-#   - this'd allow for some getter of .nim files
-#     outside of main one? (I hope)
+# TODO:
+# - save system
+# - shop is dependable on location
+# - travel is dependable on location
+# - making it post-apo
+# - making wider options for items?
+#   - ranged, but has ammo which needs to be bought
+#   - melee, just as it was
+#   (pick is before attack, reload takes one turn)
+#   - potions/food
+# - pushing locations/items/creatures onto folders
+#   (gathering .nim files by some crawler)
+# - GUI
+# - location images
+
+# - collab with Kari? (rybiczki-mutanty)
 
 echo "«¤÷==========÷¤.__.¤÷==========÷¤»"
-args: seq[string] = commandLineParams()
 
 # <--- Item --->
 type Item = object
   name: string
+  uid:  string     # unique ID (used for saves)
   cost: int
   att:  int
   def:  int
 #-----------------
 # You can add new items here (used in *Shop in initial list of contents)
 proc ItemSword(): Item =
-  return Item(name: "sword", cost: 20, att: 5, def: 0)
+  return Item(name: "sword", uid: "nr_sword", cost: 20, att: 5, def: 0)
 proc ItemChestplate(): Item =
-  return Item(name: "chestplate", cost: 30, att: 0, def: 3)
+  return Item(name: "chestplate", uid: "nr_chestplate", cost: 30, att: 0, def: 3)
 
 # <--- Beast --->
 type Beast = object
@@ -49,40 +55,30 @@ proc BeastGhoul(): Beast =
 proc BeastForestSpirit(): Beast =
   return Beast(name: "Forest Spirit", hp: rand(20..35), att: rand(3..6), def: rand(5..9))
 
-proc BeastCreeper(): Beast =
-  return Beast(name: "Creeper", hp: rand(1..10), att: rand(0..50), def: 0)
-proc BeastEnderman(): Beast =
-  return Beast(name: "Enderman", hp: 15, att: rand(1..3), def: 20)
-proc BeastZombie(): Beast =
-  return Beast(name: "Zombie", hp: rand(30..35), att: rand(2..4), def: rand(0..2))
-proc BeastSkeleton(): Beast =
-  return Beast(name: "Skeleton", hp: rand(15..25), att: rand(8..12), def: rand(0..1))
-
 # <--- Location --->
 type Location = object
   name:   string
+  uid:    string      # unique ID (used for saves)
   beasts: seq[Beast]
 #-----------------
 # You can add new locations here (used in *Travel in initial destination list)
 proc LocationBaedoor(): Location =
-  return Location(name: "Baedoor", beasts: @[BeastGhoul()])
+  return Location(name: "Baedoor", uid: "nr_baedoor", beasts: @[BeastGhoul()])
 proc LocationHauntedForest(): Location =
-  return Location(name: "Haunted Forest", beasts: @[BeastForestSpirit()])
-proc LocationOverworld(): Location =
-  return Location(name: "Overworld", beasts: @[BeastCreeper(), BeastEnderman(), BeastZombie(), BeastSkeleton()])
+  return Location(name: "Haunted Forest", uid: "nr_haunted_forest", beasts: @[BeastForestSpirit()])
 
 # <--- Player --->
 type Player = object
   hp:    int
   money: int
-  inv:   seq[string]
+  inv:   seq[Item]
   att:   int
   def:   int
   loc:   Location
 proc PlayerNew(): Player =
   return Player(hp: 100, money: 0, inv: @[], att: rand(1..3), def: 0, loc: LocationBaedoor())
 proc addToInv(self: var Player, item: Item) =
-  self.inv.add(item.name)
+  self.inv.add(item)
   self.att += item.att
   self.def += item.def
 
@@ -163,7 +159,7 @@ proc hunt(player: var Player) =
 # FIGHT
 #==============================
 proc travel(player: var Player) =
-  let destinations = @[LocationBaedoor(), LocationHauntedForest(), LocationOverworld()]  # add more locations for them to be visible in-game
+  let destinations = @[LocationBaedoor(), LocationHauntedForest()]  # add more locations for them to be visible in-game
   while true:
     echo "--------------------------"
     echo "You decided to travel:"
@@ -186,13 +182,23 @@ proc travel(player: var Player) =
 #==============================
 # SAVE
 #==============================
-proc save(player: var Player) =
-  let name = ""
-  let bat = &"""
-  @echo off
-  nimrod.exe {player.hp} {player.money} {player.att} {player.def}
-  """ # no loc, because it's object (going back to default loc? or find_loc_by_id?)
-  # inv also should be reworked ig
+proc save(save_name: string, player: var Player) =
+  let exp_path = "saves/" & save_name & ".ns"
+  let f = open(exp_path, fmWrite)
+  block saves:
+    f.writeLine($player.hp)
+    f.writeLine($player.money)
+    f.writeLine($player.att)
+    f.writeLine($player.def)
+    f.writeLine($player.loc.uid)
+    for item in player.inv:
+      f.writeLine(item.uid)
+  f.close()
+  echo "Successfully saved game as -" & save_name & "-"
+  sleep(1000)
+
+# proc load(ask: string): Player =
+#   let path = "saves/" & ask & ".toml"
 
 #==============================
 # THE GAME CORE
@@ -219,6 +225,8 @@ while true:
     travel(player)
   elif input == "cheat":
     player.money += 30
+  elif "save " in input:
+    save(input.replace("save ", ""), player)
   elif input == "x" or input == "X":
     break
   else:
