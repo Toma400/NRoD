@@ -7,12 +7,9 @@ import os
 # ---
 # (c) 2023 Tomasz Stępień, All Rights Reserved
 #----------------------------------------------
-nrod_v = "0.1" # version
+let nrod_v = "0.1" # version
 
 # TODO:
-# - save system
-# - shop is dependable on location
-# - travel is dependable on location
 # - making it post-apo
 # - making wider options for items?
 #   - ranged, but has ammo which needs to be bought
@@ -37,10 +34,10 @@ type Item = object
   def:  int
 #-----------------
 # You can add new items here (used in *Shop in initial list of contents)
-proc ItemSword(): Item =
-  return Item(name: "sword", uid: "nr_sword", cost: 20, att: 5, def: 0)
-proc ItemChestplate(): Item =
-  return Item(name: "chestplate", uid: "nr_chestplate", cost: 30, att: 0, def: 3)
+proc ItemMachete(): Item =
+  return Item(name: "Machete", uid: "nr_machete", cost: 20, att: 5, def: 0)
+proc ItemSturdyTunic(): Item =
+  return Item(name: "Sturdy Tunic", uid: "nr_sturdy_tunic", cost: 30, att: 0, def: 3)
 
 # <--- Beast --->
 type Beast = object
@@ -57,15 +54,30 @@ proc BeastForestSpirit(): Beast =
 
 # <--- Location --->
 type Location = object
-  name:   string
-  uid:    string      # unique ID (used for saves)
-  beasts: seq[Beast]
+  name:    string
+  uid:     string      # unique ID (used for saves)
+  is_shop: bool
+  shop:    seq[Item]
+  beasts:  seq[Beast]
 #-----------------
 # You can add new locations here (used in *Travel in initial destination list)
-proc LocationBaedoor(): Location =
-  return Location(name: "Baedoor", uid: "nr_baedoor", beasts: @[BeastGhoul()])
-proc LocationHauntedForest(): Location =
-  return Location(name: "Haunted Forest", uid: "nr_haunted_forest", beasts: @[BeastForestSpirit()])
+proc LocationNomadCamp(): Location =
+  return Location(name: "Nomad Camp",
+                  uid: "nr_nomad_camp",
+                  is_shop: false,
+                  shop: @[],
+                  beasts: @[BeastGhoul()])
+proc LocationNomadCampMarket(): Location =
+  return Location(name: "Nomad Camp Market",
+                  uid: "nr_nomad_camp_market",
+                  is_shop: true,
+                  shop: @[ItemMachete(), ItemSturdyTunic()],
+                  beasts: @[BeastForestSpirit()])
+
+# proc travel(loc: Location): seq[Location] =
+#   case loc.uid:
+#     of LocationNomadCamp().uid:       return @[LocationNomadCampMarket()]
+#     of LocationNomadCampMarket().uid: return @[LocationNomadCamp()]
 
 # <--- Player --->
 type Player = object
@@ -76,7 +88,7 @@ type Player = object
   def:   int
   loc:   Location
 proc PlayerNew(): Player =
-  return Player(hp: 100, money: 0, inv: @[], att: rand(1..3), def: 0, loc: LocationBaedoor())
+  return Player(hp: 100, money: 0, inv: @[], att: rand(1..3), def: 0, loc: LocationNomadCamp())
 proc addToInv(self: var Player, item: Item) =
   self.inv.add(item)
   self.att += item.att
@@ -104,7 +116,7 @@ proc buy(player: var Player, item: Item) =
     echo "You don't have enough money for that!"
 
 proc shop(player: var Player) =
-  let shop_contents = @[ItemSword(), ItemChestplate()] # add more contents for them to be visible in-game
+  let shop_contents = player.loc.shop # add more contents for them to be visible in-game
   while true:
     echo "--------------------------"
     for item in shop_contents:
@@ -159,7 +171,8 @@ proc hunt(player: var Player) =
 # FIGHT
 #==============================
 proc travel(player: var Player) =
-  let destinations = @[LocationBaedoor(), LocationHauntedForest()]  # add more locations for them to be visible in-game
+  # let destinations = player.loc.travel()  # add more locations for them to be visible in-game
+  let destinations = @[LocationNomadCampMarket(), LocationNomadCamp()]
   while true:
     echo "--------------------------"
     echo "You decided to travel:"
@@ -207,21 +220,24 @@ var player = PlayerNew()
 
 while true:
   if player.hp <= 0: death()
+  # let can_travel = player.loc.travel().size > 0
+
   echo "--------------------------"
   echo ":: "&player.loc.name
   echo "--------------------------"
   echo "HP: ", $player.hp, " | $: ", $player.money
-  echo "⚔︎: ", $player.att, " | ⛊: ", $player.def
+  echo "§: ", $player.att, " | ¤: ", $player.def
   echo "--------------------------"
-  echo "Press 1 to buy equipment"
+  if player.loc.is_shop: echo "Press 1 to buy equipment"
   echo "Press 2 to search for beast"
+  # if can_travel: echo "Press 3 to travel"
   echo "Press 3 to travel"
   var input = readLine(stdin)
-  if input == $1:
+  if input == $1 and player.loc.is_shop:
     shop(player)
   elif input == $2:
     hunt(player)
-  elif input == $3:
+  elif input == $3:# and can_travel:
     travel(player)
   elif input == "cheat":
     player.money += 30
