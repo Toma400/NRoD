@@ -1,6 +1,8 @@
-import std/options
+# import dir_crawler
 import std/random
 import strutils
+import nigui
+import gui
 import os
 
 #----------------------------------------------
@@ -8,7 +10,10 @@ import os
 # ---
 # (c) 2023 Tomasz Stępień, All Rights Reserved
 #----------------------------------------------
-let nrod_v = "0.2" # version
+let nrod_v   = "0.2" # version
+#----------------------------------------------
+let args     = os.commandLineParams()
+var terminal = "-terminal" in args
 
 # TODO:
 # - making wider options for items?
@@ -23,7 +28,27 @@ let nrod_v = "0.2" # version
 
 # - collab with Kari? (rybiczki-mutanty)
 
+#==============================
+# INITIALISER
+#==============================
 if not dirExists("saves"): createDir("saves")
+if terminal:
+  echo "<-------=====-o.__.o-=====------->"
+  echo "N R O D"
+  echo "Near"
+  echo "Risk of Death"
+  echo "<-------=====--------=====------->"
+  echo "TIP: Write -save [name]- to save, -load [name]- to load previously saved game"
+  echo "TIP: Write -x- to exit the game"
+  echo "------------------"
+  echo "loading ..."
+  # timer between this
+  # loadResources()
+  # import dir_result
+  # and this (= performance of mods)
+  sleep(2000)
+
+#==============================
 
 # <--- Item --->
 type Item = object
@@ -113,13 +138,11 @@ proc addToInv(self: var Player, item: Item) =
 proc use(player: var Player, item: Item) =
   if item.eff:
     if item.uid == ItemSmallHealingPotion().uid: player.hp = player.hp + 15
+  if player.hp > 100: player.hp = 100 # fixing overvaluing
 
 #==============================
 # HELPERS
 #==============================
-proc crawlDirs() =
-  sleep(0)
-
 proc itemBrowse(suid: string): Item =
   for it in items:
     if it.uid == suid: return it
@@ -278,50 +301,72 @@ proc load(ask: string, cur_p: Player): Player =
 # THE GAME CORE
 #==============================
 var player = PlayerNew()
-echo "<-------=====-o.__.o-=====------->"
-echo "N R O D"
-echo "Near"
-echo "Risk of Death"
-echo "<-------=====--------=====------->"
-echo "TIP: Write -save [name]- to save, -load [name]- to load previously saved game"
-echo "TIP: Write -x- to exit the game"
-echo "------------------"
-echo "loading ..."
-sleep(4000)
 
-while true:
-  if player.hp <= 0: death()
-  let can_shop   = player.loc.is_shop
-  let can_travel = player.loc.roads().len > 0
-  let can_hunt   = player.loc.beasts().len > 0
+# <--------------------- TERMINAL ----------------------->
+if terminal:
+  while true:
+    if player.hp <= 0: death()
+    let can_shop   = player.loc.is_shop
+    let can_travel = player.loc.roads().len > 0
+    let can_hunt   = player.loc.beasts().len > 0
 
-  echo "--------------------------"
-  echo ":: "&player.loc.name
-  echo "--------------------------"
-  echo "HP: ", $player.hp, " | $: ", $player.money
-  echo "AT: ", $player.att, " | D: ", $player.def
-  echo "--------------------------"
-  if can_shop:   echo "Press 1 to buy equipment"
-  if can_hunt:   echo "Press 2 to search for beast"
-  if can_travel: echo "Press 3 to travel"
-  #---------------------------
-  var input = readLine(stdin)
-  if input == $1 and player.loc.is_shop:
-    shop(player)
-  elif input == $2:
-    hunt(player)
-  elif input == $3 and can_travel:
-    travel(player)
-  elif input == "cheat":
-    player.money += 30
-  elif "save " in input:
-    save(input.replace("save ", ""), player)
-  elif "load " in input:
-    player = load(input.replace("load ", ""), player)
-  elif input == "x" or input == "X":
-    break
-  else:
-    echo "This is not valid choice"
-    sleep 2000
-    echo "            v            "
-    continue
+    echo "--------------------------"
+    echo ":: "&player.loc.name
+    echo "--------------------------"
+    echo "HP: ", $player.hp, " | $: ", $player.money
+    echo "AT: ", $player.att, " | D: ", $player.def
+    echo "--------------------------"
+    if can_shop:   echo "Press 1 to buy equipment"
+    if can_hunt:   echo "Press 2 to search for beast"
+    if can_travel: echo "Press 3 to travel"
+    #---------------------------
+    var input = readLine(stdin)
+    if input == $1 and player.loc.is_shop:
+      shop(player)
+    elif input == $2:
+      hunt(player)
+    elif input == $3 and can_travel:
+      travel(player)
+    elif input == "cheat":
+      player.money += 30
+    elif "save " in input:
+      save(input.replace("save ", ""), player)
+    elif "load " in input:
+      player = load(input.replace("load ", ""), player)
+    elif input == "x" or input == "X":
+      break
+    else:
+      echo "This is not valid choice"
+      sleep 2000
+      echo "            v            "
+      continue
+
+# <----------------------- GUI ---------------------------->
+else:
+  app.init()
+
+  var window = newWindow("Near Risk of Death")
+
+  var main   = newLayoutContainer(Layout_Horizontal)
+  var left   = newLayoutContainer(Layout_Vertical)
+  var right  = newLayoutContainer(Layout_Vertical)
+
+  # Elements
+  var loc_text  = newLabel(player.loc.name)
+  var health    = newProgressBar()
+
+  setMnSettings(window = window,
+                left   = left,
+                right  = right)
+  setElmSettings(loc_text = loc_text,
+                 health   = health,
+                 hp       = player.hp)
+  setLayout(window = window,
+            main   = main,
+            left   = left,
+            right  = right,
+            loc_text = loc_text,
+            health   = health)
+
+  window.show()
+  app.run()
