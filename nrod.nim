@@ -1,3 +1,4 @@
+import std/options
 import std/random
 import strutils
 import os
@@ -23,7 +24,6 @@ let nrod_v = "0.1" # version
 # - collab with Kari? (rybiczki-mutanty)
 
 if not dirExists("saves"): createDir("saves")
-echo "«¤÷==========÷¤.__.¤÷==========÷¤»"
 
 # <--- Item --->
 type Item = object
@@ -41,6 +41,9 @@ proc ItemSturdyTunic(): Item =
   return Item(name: "Sturdy Tunic", uid: "nr_sturdy_tunic", cost: 30, att: 0, def: 3, eff: false)
 proc ItemSmallHealingPotion(): Item =
   return Item(name: "Small Healing Potion", uid: "nr_small_healing_potion", cost: 10, att: 0, def: 0, eff: true)
+
+# item registry (should be filled for save system)
+let items = @[ItemMachete(), ItemSturdyTunic(), ItemSmallHealingPotion()]
 
 # <--- Beast --->
 type Beast = object
@@ -72,6 +75,9 @@ proc LocationWastes(): Location =
   return Location(name: "Wastes",
                   uid: "nr_wastes",
                   is_shop: false)
+
+# location registry (should be filled for save system)
+let locations = @[LocationNomadCamp(), LocationNomadCampMarket(), LocationWastes()]
 
 # shops in locations
 proc shop(loc: Location): seq[Item] =
@@ -107,6 +113,18 @@ proc addToInv(self: var Player, item: Item) =
 proc use(player: var Player, item: Item) =
   if item.eff:
     if item.uid == ItemSmallHealingPotion().uid: player.hp = player.hp + 15
+
+#==============================
+# HELPERS
+#==============================
+proc itemBrowse(suid: string): Item =
+  for it in items:
+    if it.uid == suid: return it
+
+proc locationBrowse(suid: string): Location =
+  for loc in locations:
+    if loc.uid == suid: return loc
+  return LocationNomadCamp()
 
 #==============================
 # MAIN EVENTS
@@ -214,24 +232,50 @@ proc save(save_name: string, player: var Player) =
   let exp_path = "saves/" & save_name & ".ns"
   let f = open(exp_path, fmWrite)
   block saves:
-    f.writeLine($player.hp)
-    f.writeLine($player.money)
-    f.writeLine($player.att)
-    f.writeLine($player.def)
-    f.writeLine($player.loc.uid)
-    for item in player.inv:
+    f.writeLine($player.hp)      # line 1 (i0)
+    f.writeLine($player.money)   # line 2 (i1)
+    f.writeLine($player.att)     # line 3 (i2)
+    f.writeLine($player.def)     # line 4 (i3)
+    f.writeLine($player.loc.uid) # line 5 (i4)
+    for item in player.inv:      # lines 6+ (i5+)
       f.writeLine(item.uid)
   f.close()
   echo "Successfully saved game as -" & save_name & "-"
   sleep(1000)
 
-# proc load(ask: string): Player =
-#   let path = "saves/" & ask & ".toml"
+proc load(ask: string): Player =
+  let imp_path = "saves/" & ask & ".ns"
+  var p = PlayerNew()
+  block loads:
+    let lseq = readLines(imp_path, 5)
+    p.hp    = parseInt(lseq[0])
+    p.money = parseInt(lseq[1])
+    p.att   = parseInt(lseq[2])
+    p.def   = parseInt(lseq[3])
+    p.loc   = locationBrowse(lseq[4])
+    for ix, line in lseq:
+      if ix > 4:
+        let ir = itemBrowse(line)
+        if ir of Item: p.inv.add(ir)
+
+  echo "Successfully loaded game as -" & ask & "-"
+  sleep(1000)
+  return p
 
 #==============================
 # THE GAME CORE
 #==============================
 var player = PlayerNew()
+echo "<-------=====-o.__.o-=====------->"
+echo "N R O D"
+echo "Near"
+echo "Risk of Death"
+echo "<-------=====--------=====------->"
+echo "TIP: Write -save [name]- to save, -load [name]- to load previously saved game"
+echo "TIP: Write -x- to exit the game"
+echo "------------------"
+echo "loading ..."
+sleep(4000)
 
 while true:
   if player.hp <= 0: death()
@@ -243,7 +287,7 @@ while true:
   echo ":: "&player.loc.name
   echo "--------------------------"
   echo "HP: ", $player.hp, " | $: ", $player.money
-  echo "§: ", $player.att, " | ¤: ", $player.def
+  echo "AT: ", $player.att, " | D: ", $player.def
   echo "--------------------------"
   if can_shop:   echo "Press 1 to buy equipment"
   if can_hunt:   echo "Press 2 to search for beast"
@@ -260,6 +304,8 @@ while true:
     player.money += 30
   elif "save " in input:
     save(input.replace("save ", ""), player)
+  elif "load " in input:
+    player = load(input.replace("load ", ""))
   elif input == "x" or input == "X":
     break
   else:
