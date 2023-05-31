@@ -8,7 +8,7 @@ import os
 # ---
 # (c) 2023 Tomasz Stępień, All Rights Reserved
 #----------------------------------------------
-let nrod_v = "0.1" # version
+let nrod_v = "0.2" # version
 
 # TODO:
 # - making wider options for items?
@@ -117,6 +117,9 @@ proc use(player: var Player, item: Item) =
 #==============================
 # HELPERS
 #==============================
+proc crawlDirs() =
+  sleep(0)
+
 proc itemBrowse(suid: string): Item =
   for it in items:
     if it.uid == suid: return it
@@ -229,38 +232,47 @@ proc travel(player: var Player) =
 # SAVE
 #==============================
 proc save(save_name: string, player: var Player) =
-  let exp_path = "saves/" & save_name & ".ns"
-  let f = open(exp_path, fmWrite)
-  block saves:
-    f.writeLine($player.hp)      # line 1 (i0)
-    f.writeLine($player.money)   # line 2 (i1)
-    f.writeLine($player.att)     # line 3 (i2)
-    f.writeLine($player.def)     # line 4 (i3)
-    f.writeLine($player.loc.uid) # line 5 (i4)
-    for item in player.inv:      # lines 6+ (i5+)
-      f.writeLine(item.uid)
-  f.close()
-  echo "Successfully saved game as -" & save_name & "-"
-  sleep(1000)
+  try:
+    let exp_path = "saves/" & save_name & ".ns"
+    let f = open(exp_path, fmWrite)
+    block saves:
+      f.writeLine($player.hp)      # line 1 (i0)
+      f.writeLine($player.money)   # line 2 (i1)
+      f.writeLine($player.att)     # line 3 (i2)
+      f.writeLine($player.def)     # line 4 (i3)
+      f.writeLine($player.loc.uid) # line 5 (i4)
+      for item in player.inv:      # lines 6+ (i5+)
+        f.writeLine(item.uid)
+    f.close()
+    echo "Successfully saved game as -" & save_name & "-"
+    sleep(1000)
+  except:
+    echo "Couldn't save the same"
+    sleep(1000)
 
-proc load(ask: string): Player =
-  let imp_path = "saves/" & ask & ".ns"
-  var p = PlayerNew()
-  block loads:
-    let lseq = readLines(imp_path, 5)
-    p.hp    = parseInt(lseq[0])
-    p.money = parseInt(lseq[1])
-    p.att   = parseInt(lseq[2])
-    p.def   = parseInt(lseq[3])
-    p.loc   = locationBrowse(lseq[4])
-    for ix, line in lseq:
-      if ix > 4:
-        let ir = itemBrowse(line)
-        if ir of Item: p.inv.add(ir)
+proc load(ask: string, cur_p: Player): Player =
+  try:
+    let imp_path = "saves/" & ask & ".ns"
+    var p = PlayerNew()
+    block loads:
+      let lseq = readLines(imp_path, 5)
+      p.hp    = parseInt(lseq[0])
+      p.money = parseInt(lseq[1])
+      p.att   = parseInt(lseq[2])
+      p.def   = parseInt(lseq[3])
+      p.loc   = locationBrowse(lseq[4])
+      for ix, line in lseq:
+        if ix > 4:
+          let ir = itemBrowse(line)
+          if ir of Item: p.inv.add(ir)
 
-  echo "Successfully loaded game as -" & ask & "-"
-  sleep(1000)
-  return p
+    echo "Successfully loaded game as -" & ask & "-"
+    sleep(1000)
+    return p
+  except:
+    echo "Couldn't load the game"
+    sleep(1000)
+    return cur_p
 
 #==============================
 # THE GAME CORE
@@ -305,7 +317,7 @@ while true:
   elif "save " in input:
     save(input.replace("save ", ""), player)
   elif "load " in input:
-    player = load(input.replace("load ", ""))
+    player = load(input.replace("load ", ""), player)
   elif input == "x" or input == "X":
     break
   else:
