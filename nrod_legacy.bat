@@ -1,2 +1,2 @@
 @echo off
-nrod.exe -terminal
+nrod_legacy.exe -terminal

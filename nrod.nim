@@ -1,6 +1,8 @@
 # import dir_crawler
 import std/random
+import std/tables
 import strutils
+import helpers
 import nigui
 import gui
 import os
@@ -347,26 +349,42 @@ else:
 
   var window = newWindow("Near Risk of Death")
 
+  # Containers
   var main   = newLayoutContainer(Layout_Horizontal)
   var left   = newLayoutContainer(Layout_Vertical)
   var right  = newLayoutContainer(Layout_Vertical)
 
   # Elements
+  var loc_img = newImage()
+  loc_img.loadFromFile("loc1.png")
+
   var loc_text  = newLabel(player.loc.name)
   var health    = newProgressBar()
+  var shop_bt   = newButton("Shop")
+  var hunt_bt   = newButton("Hunt")
+  var travel_bt = newButton("Travel")
 
-  setMnSettings(window = window,
-                left   = left,
-                right  = right)
-  setElmSettings(loc_text = loc_text,
-                 health   = health,
-                 hp       = player.hp)
-  setLayout(window = window,
-            main   = main,
-            left   = left,
-            right  = right,
-            loc_text = loc_text,
-            health   = health)
+  proc updateWindowRef() = # put there to not clutter the code with all arguments over and over
+      updateWindow(window   = window,
+                   main     = main,
+                   left     = left,
+                   right    = right,
+                   loc_text = loc_text,
+                   health   = health,
+                   hp       = player.hp,
+                   buttons  = {"travel": travel_bt,
+                               "shop":   shop_bt,
+                               "hunt":   hunt_bt}.toOrderedTable)
+
+  updateWindowRef()
+
+  left.onDraw = proc (event: DrawEvent) =
+    let canvas = event.control.canvas
+    canvas.drawImage(loc_img, x=returnCell(0, AXES.X), y=returnCell(0, AXES.Y),
+                              width=(w_x/2).int)
+
+  # travel_bt.onClick = proc () =
+  #   uW()
 
   window.show()
   app.run()
