@@ -381,8 +381,9 @@ else:
   var main   = newLayoutContainer(Layout_Horizontal)
   var left   = newLayoutContainer(Layout_Vertical)
   var right  = newLayoutContainer(Layout_Vertical)
-  var contr  = newLayoutContainer(Layout_Horizontal) # control container | control buttons
-  var actn   = newLayoutContainer(Layout_Vertical)   # action container  | processing events
+  var contr  = newLayoutContainer(Layout_Horizontal) # control container   | control buttons
+  var savn   = newLayoutContainer(Layout_Horizontal) # save/load container | save/load system
+  var actn   = newLayoutContainer(Layout_Vertical)   # action container    | processing events
 
   # Elements
   var loc_img = newImage()
@@ -401,6 +402,7 @@ else:
                    left     = left,
                    right    = right,
                    contr    = contr,
+                   savn     = savn,
                    actn     = actn,
                    loc_img   = loc_img,
                    loc_uid   = player.loc.uid,
