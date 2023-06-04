@@ -378,7 +378,7 @@ else:
 
   # Elements
   var loc_img = newImage()
-  loc_img.loadFromFile("assets/" & player.loc.uid & ".png")
+  # loc_img.loadFromFile("assets/" & player.loc.uid & ".png")
 
   var loc_label = newLabel(player.loc.name)
   var health    = newProgressBar()
@@ -394,6 +394,8 @@ else:
                    left     = left,
                    right    = right,
                    contr    = contr,
+                   loc_img   = loc_img,
+                   loc_uid   = player.loc.uid,
                    loc_label = loc_label,
                    loc_text  = player.loc.name,
                    health    = health,

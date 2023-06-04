@@ -30,8 +30,10 @@ proc setMnSettings (window: Window, left: LayoutContainer, right: LayoutContaine
 # right.width = w_x
 # right.y     = w_y
 
-proc setElmSettings (loc_label: Label, loc_text: string,
+proc setElmSettings (loc_img: Image, loc_uid: string, loc_label: Label, loc_text: string,
                      health: ProgressBar, hp: int, travel_cb: ComboBox, travel_dt: seq[string]) =
+  try:    loc_img.loadFromFile("assets/" & loc_uid & ".png")
+  except: loc_img.loadFromFile("assets/q_mark.png")
   loc_label.yTextAlign = YTextAlign_Center
   loc_label.text       = loc_text
   health.value         = hp/100
@@ -54,14 +56,16 @@ proc setLayout (window: Window, main: LayoutContainer, left: LayoutContainer, ri
     contr.add(travel_cb)
 
 proc updateWindow* (mode: int, window: Window, main: LayoutContainer, left: LayoutContainer, right: LayoutContainer, contr: LayoutContainer,
-                    loc_label: Label, loc_text: string, health: ProgressBar, hp: int, buttons: OrderedTable,
+                    loc_img: Image, loc_uid: string, loc_label: Label, loc_text: string, health: ProgressBar, hp: int, buttons: OrderedTable,
                     travel_cb: ComboBox, travel_dt: seq[string]) =
 
   setMnSettings(window = window,
                 left   = left,
                 right  = right,
                 contr  = contr)
-  setElmSettings(loc_label = loc_label,
+  setElmSettings(loc_img   = loc_img,
+                 loc_uid   = loc_uid,
+                 loc_label = loc_label,
                  loc_text  = loc_text,
                  health    = health,
                  hp        = hp,
