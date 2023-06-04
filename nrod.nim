@@ -118,6 +118,27 @@ proc roads(loc: Location): seq[Location] =
   elif loc.uid == LocationWastes().uid:          return @[LocationNomadCamp()]
   else: return @[]
 
+proc roadsData(loc: Location): seq[seq[string]] =
+  var loc_seq: seq[seq[string]]
+  var loc_uids: seq[string]
+  var loc_names: seq[string]
+  for locg in loc.roads():
+    loc_uids.add(locg.uid)
+    loc_names.add(locg.name)
+  return @[loc_uids, loc_names]
+
+proc roadsUid(loc: Location): seq[string] =
+  var loc_seq: seq[string]
+  for locg in loc.roads():
+    loc_seq.add(locg.uid)
+  return loc_seq
+
+proc roadsNames(loc: Location): seq[string] =
+  var loc_seq: seq[string]
+  for locg in loc.roads():
+    loc_seq.add(locg.name)
+  return loc_seq
+
 # list of beasts in locations
 proc beasts(loc: Location): seq[Beast] =
   if loc.uid == LocationWastes().uid: return @[BeastGhoul()]
@@ -131,7 +152,7 @@ type Player = object
   att:   int
   def:   int
   loc:   Location
-proc PlayerNew(): Player =
+proc playerNew(): Player =
   return Player(hp: 100, money: 0, inv: @[], att: rand(1..3), def: 0, loc: LocationNomadCamp())
 proc addToInv(self: var Player, item: Item) =
   self.inv.add(item)
@@ -278,7 +299,7 @@ proc save(save_name: string, player: var Player) =
 proc load(ask: string, cur_p: Player): Player =
   try:
     let imp_path = "saves/" & ask & ".ns"
-    var p = PlayerNew()
+    var p = playerNew()
     block loads:
       let lseq = readLines(imp_path, 5)
       p.hp    = parseInt(lseq[0])
@@ -302,7 +323,7 @@ proc load(ask: string, cur_p: Player): Player =
 #==============================
 # THE GAME CORE
 #==============================
-var player = PlayerNew()
+var player = playerNew()
 
 # <--------------------- TERMINAL ----------------------->
 if terminal:
@@ -356,35 +377,43 @@ else:
 
   # Elements
   var loc_img = newImage()
-  loc_img.loadFromFile("loc1.png")
+  loc_img.loadFromFile("assets/" & player.loc.uid & ".png")
 
-  var loc_text  = newLabel(player.loc.name)
+  var loc_label = newLabel(player.loc.name)
   var health    = newProgressBar()
   var shop_bt   = newButton("Shop")
   var hunt_bt   = newButton("Hunt")
   var travel_bt = newButton("Travel")
+  var travel_cb = newComboBox(player.loc.roadsData()[1])
 
-  proc updateWindowRef() = # put there to not clutter the code with all arguments over and over
-      updateWindow(window   = window,
+  proc updateWindowRef(mode: int = 1) = # put there to not clutter the code with all arguments over and over
+      updateWindow(mode     = mode,       # 0 is initial, 1 is update (default is update)
+                   window   = window,
                    main     = main,
                    left     = left,
                    right    = right,
-                   loc_text = loc_text,
-                   health   = health,
-                   hp       = player.hp,
-                   buttons  = {"travel": travel_bt,
-                               "shop":   shop_bt,
-                               "hunt":   hunt_bt}.toOrderedTable)
+                   loc_label = loc_label,
+                   loc_text  = player.loc.name,
+                   health    = health,
+                   hp        = player.hp,
+                   buttons   = {"travel": travel_bt,
+                                "shop":   shop_bt,
+                                "hunt":   hunt_bt}.toOrderedTable,
+                   travel_cb = travel_cb,
+                   travel_dt = player.loc.roadsData()[1])
 
-  updateWindowRef()
+  updateWindowRef(mode=0)
 
   left.onDraw = proc (event: DrawEvent) =
     let canvas = event.control.canvas
     canvas.drawImage(loc_img, x=returnCell(0, AXES.X), y=returnCell(0, AXES.Y),
                               width=(w_x/2).int)
 
-  # travel_bt.onClick = proc () =
-  #   uW()
+  travel_bt.onClick = proc (event: ClickEvent) =
+    player.loc = locationBrowse(player.loc.roadsData()[0][travel_cb.index])
+    updateWindowRef()
+
+  # handleKeyDownEvent
 
   window.show()
   app.run()
