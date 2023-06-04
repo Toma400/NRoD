@@ -2,11 +2,11 @@ import std/tables
 import nigui
 import nrod
 
-let w_x* = 700
+let w_x* = 720
 let w_y* = 430
 
-proc setMnSettings (mode: int, window: Window,
-                    left: LayoutContainer, right: LayoutContainer, contr: LayoutContainer, savn: LayoutContainer, actn: LayoutContainer) =
+proc setMnSettings (mode: int, window: Window, left: LayoutContainer, right: LayoutContainer,
+                    contr: LayoutContainer, savn: LayoutContainer, actn: LayoutContainer, shpn: LayoutContainer, hntn: LayoutContainer) =
   if mode == 0: # initial value
     window.width  = w_x
     window.height = w_y
@@ -15,9 +15,11 @@ proc setMnSettings (mode: int, window: Window,
     window.height = window.height
   left.frame    = newFrame()
   right.frame   = newFrame()
-  contr.frame   = newFrame()
-  savn.frame    = newFrame()
+  contr.frame   = newFrame("Travel")
+  savn.frame    = newFrame("Save/Load")
   actn.frame    = newFrame()
+  shpn.frame    = newFrame("Shop")
+  hntn.frame    = newFrame("Hunt")
   left.xAlign  = XAlign_Center
   left.yAlign  = YAlign_Center
   right.xAlign = XAlign_Center
@@ -28,8 +30,12 @@ proc setMnSettings (mode: int, window: Window,
   savn.yAlign  = YAlign_Center
   actn.xAlign  = XAlign_Center
   actn.yAlign  = YAlign_Center
+  shpn.xAlign  = XAlign_Center
+  shpn.yAlign  = YAlign_Center
+  hntn.xAlign  = XAlign_Center
+  hntn.yAlign  = YAlign_Center
   left.padding  = (w_x/4).int
-  actn.padding  = (w_y/5).int
+  # actn.padding  = (w_y/6).int
   left.setInnerSize(width=(w_x/2).int,  height=w_y)
   right.setInnerSize(width=(w_x/2).int, height=w_y)
   actn.setInnerSize(width=(w_x/2).int,  height=(w_y/2).int)
@@ -44,18 +50,20 @@ proc setMnSettings (mode: int, window: Window,
 # right.y     = w_y
 
 proc setElmSettings (loc_img: Image, loc_uid: string, loc_label: Label, loc_text: string,
-                     health: ProgressBar, hp: int, travel_cb: ComboBox, travel_dt: seq[string], load_cb: ComboBox, load_data: seq[string]) =
+                     health: ProgressBar, hp: int, travel_cb: ComboBox, travel_dt: seq[string], shop_cb: ComboBox, shop_dt: seq[string],
+                     load_cb: ComboBox, load_data: seq[string]) =
   try:    loc_img.loadFromFile("assets/" & loc_uid & ".png")
   except: loc_img.loadFromFile("assets/q_mark.png")
   loc_label.yTextAlign = YTextAlign_Center
   loc_label.text       = loc_text
   health.value         = hp/100
   travel_cb.options    = travel_dt
+  shop_cb.options      = shop_dt
   load_cb.options      = load_data
 
-proc setLayout (window: Window,
-                main: LayoutContainer, left: LayoutContainer, right: LayoutContainer, contr: LayoutContainer, savn: LayoutContainer, actn: LayoutContainer,
-                loc_label: Label, health: ProgressBar, buttons: OrderedTable, travel_cb: ComboBox, save_txt: TextBox, load_cb: ComboBox) =
+proc setLayout (window: Window, main: LayoutContainer, left: LayoutContainer, right: LayoutContainer,
+                contr: LayoutContainer, savn: LayoutContainer, actn: LayoutContainer, shpn: LayoutContainer, hntn: LayoutContainer,
+                loc_label: Label, health: ProgressBar, buttons: OrderedTable, travel_cb: ComboBox, shop_cb: ComboBox, save_txt: TextBox, load_cb: ComboBox) =
   block wContainers:
     window.add(main)
     main.add(left)
@@ -65,7 +73,6 @@ proc setLayout (window: Window,
     right.add(health)
   block wButtons:
     right.add(contr)
-    contr.add(buttons["shop"])
     contr.add(buttons["hunt"])
     contr.add(buttons["travel"])
     contr.add(travel_cb)
@@ -77,11 +84,17 @@ proc setLayout (window: Window,
     savn.add(load_cb)
   block wSegments:
     right.add(actn)
+    actn.add(shpn)
+    actn.add(hntn)
+  block wShop:
+    shpn.add(buttons["shop"])
+    shpn.add(shop_cb)
 
-proc updateWindow* (mode: int, window: Window,
-                    main: LayoutContainer, left: LayoutContainer, right: LayoutContainer, contr: LayoutContainer, savn: LayoutContainer, actn: LayoutContainer,
+proc updateWindow* (mode: int, window: Window, main: LayoutContainer, left: LayoutContainer, right: LayoutContainer,
+                    contr: LayoutContainer, savn: LayoutContainer, actn: LayoutContainer, shpn: LayoutContainer, hntn: LayoutContainer,
                     loc_img: Image, loc_uid: string, loc_label: Label, loc_text: string, health: ProgressBar, hp: int, buttons: OrderedTable,
-                    travel_cb: ComboBox, travel_dt: seq[string], save_txt: TextBox, load_cb: ComboBox, load_data: seq[string]) =
+                    travel_cb: ComboBox, travel_dt: seq[string], shop_cb: ComboBox, shop_dt: seq[string],
+                    save_txt: TextBox, load_cb: ComboBox, load_data: seq[string]) =
 
   setMnSettings(mode   = mode,
                 window = window,
@@ -89,7 +102,9 @@ proc updateWindow* (mode: int, window: Window,
                 right  = right,
                 contr  = contr,
                 savn   = savn,
-                actn   = actn)
+                actn   = actn,
+                shpn   = shpn,
+                hntn   = hntn)
   setElmSettings(loc_img   = loc_img,
                  loc_uid   = loc_uid,
                  loc_label = loc_label,
@@ -98,6 +113,8 @@ proc updateWindow* (mode: int, window: Window,
                  hp        = hp,
                  travel_cb = travel_cb,
                  travel_dt = travel_dt,
+                 shop_cb   = shop_cb,
+                 shop_dt   = shop_dt,
                  load_cb   = load_cb,
                  load_data = load_data)
   if mode == 0: # 0 is set as initial, 1 is for update
@@ -108,9 +125,12 @@ proc updateWindow* (mode: int, window: Window,
               contr  = contr,
               savn   = savn,
               actn   = actn,
+              shpn   = shpn,
+              hntn   = hntn,
               loc_label = loc_label,
               health    = health,
               buttons   = buttons,
               travel_cb = travel_cb,
+              shop_cb   = shop_cb,
               save_txt  = save_txt,
               load_cb   = load_cb)

@@ -112,6 +112,14 @@ proc shop(loc: Location): seq[Item] =
   if loc.uid == LocationNomadCampMarket().uid: return @[ItemMachete(), ItemSturdyTunic(), ItemSmallHealingPotion()]
   else: return @[]
 
+proc shopData(loc: Location): seq[seq[string]] =
+  var it_uids: seq[string]
+  var it_names: seq[string]
+  for item in loc.shop():
+    it_uids.add(item.uid)
+    it_names.add(item.name & ": " & $item.cost)
+  return @[it_uids, it_names]
+
 # travelling roads to locations
 proc roads(loc: Location): seq[Location] =
   if   loc.uid == LocationNomadCamp().uid:       return @[LocationNomadCampMarket(), LocationWastes()]
@@ -120,7 +128,6 @@ proc roads(loc: Location): seq[Location] =
   else: return @[]
 
 proc roadsData(loc: Location): seq[seq[string]] =
-  var loc_seq: seq[seq[string]]
   var loc_uids: seq[string]
   var loc_names: seq[string]
   for locg in loc.roads():
@@ -200,16 +207,17 @@ proc death() =
 # FUNCS
 #==============================
 # --- SHOP ---
-proc buy(player: var Player, item: Item) =
+type BuyResult = enum BUY_FAILED, BOUGHT
+
+proc buy(player: var Player, item: Item): BuyResult =
   if player.money >= item.cost:
     player.money -= item.cost
     addToInv(player, item)
-    echo "Bought ", item.name, "!"
     if item.eff:
       player.use(item)
-    sleep 2000
+    return BOUGHT
   else:
-    echo "You don't have enough money for that!"
+    return BUY_FAILED
 
 proc shop(player: var Player) =
   let shop_contents = player.loc.shop() # add more contents for them to be visible in-game
@@ -227,7 +235,11 @@ proc shop(player: var Player) =
       var intut = parseInt(input)
       try:
         if intut <= shop_contents.len:
-           buy(player, shop_contents[intut-1])
+           if buy(player, shop_contents[intut-1]) == BOUGHT:
+             echo "Bought ", shop_contents[intut-1].name, "!"
+           else:
+             echo "You don't have enough money for that!"
+             sleep 2000
         else: continue
       except: continue
     except: continue
@@ -389,22 +401,32 @@ else:
   var right  = newLayoutContainer(Layout_Vertical)
   var contr  = newLayoutContainer(Layout_Horizontal) # control container   | control buttons
   var savn   = newLayoutContainer(Layout_Horizontal) # save/load container | save/load system
-  var actn   = newLayoutContainer(Layout_Vertical)   # action container    | processing events
+  var actn   = newLayoutContainer(Layout_Horizontal) # action container    | processing events
+  var shpn   = newLayoutContainer(Layout_Horizontal) # shop container
+  var hntn   = newLayoutContainer(Layout_Vertical)   # hunt container
 
   # Elements
   var loc_img = newImage()
 
   var loc_label = newLabel(player.loc.name)
   var health    = newProgressBar()
-  var shop_bt   = newButton("Shop")
+  var shop_bt   = newButton("Buy the item")
   var hunt_bt   = newButton("Hunt")
   var travel_bt = newButton("Travel")
   var travel_cb = newComboBox(player.loc.roadsData()[1])
+  var shop_cb   = newComboBox(player.loc.shopData()[1])
   var save_txt  = newTextBox()
   var save_bt   = newButton("Save") # up to change when it's overwrite
   var load_bt   = newButton("Load")
   var load_cb   = newComboBox(saveBrowse())
 
+  proc updateStates() =
+      if shop(player.loc).len > 0: shop_bt.enabled = true;  shop_bt.text = "Buy the item"
+      else:                        shop_bt.enabled = false; shop_bt.text = "No shop in this location"
+      if shop_cb.index >= 0:
+        if itemBrowse(player.loc.shopData()[0][shop_cb.index]).cost > player.money:
+          shop_bt.enabled = false
+      else: shop_bt.enabled = false
   proc updateWindowRef(mode: int = 1) = # put there to not clutter the code with all arguments over and over
       updateWindow(mode     = mode,       # 0 is initial, 1 is update (default is update)
                    window   = window,
@@ -414,6 +436,8 @@ else:
                    contr    = contr,
                    savn     = savn,
                    actn     = actn,
+                   shpn     = shpn,
+                   hntn     = hntn,
                    loc_img   = loc_img,
                    loc_uid   = player.loc.uid,
                    loc_label = loc_label,
@@ -427,9 +451,12 @@ else:
                                 "load":   load_bt}.toOrderedTable,
                    travel_cb = travel_cb,
                    travel_dt = player.loc.roadsData()[1],
+                   shop_cb   = shop_cb,
+                   shop_dt   = player.loc.shopData()[1],
                    save_txt  = save_txt,
                    load_cb   = load_cb,
                    load_data = saveBrowse())
+      updateStates()
 
   updateWindowRef(mode=0)
 
@@ -441,6 +468,14 @@ else:
   travel_bt.onClick = proc (event: ClickEvent) =
     player.loc = locationBrowse(player.loc.roadsData()[0][travel_cb.index])
     updateWindowRef()
+
+  shop_cb.onChange = proc (event: ComboBoxChangeEvent) =
+    updateStates()
+
+  shop_bt.onClick = proc (event: ClickEvent) =
+    if shop_cb.index >= 0:
+      discard player.buy(itemBrowse(player.loc.shopData()[0][shop_cb.index]))
+    updateStates()
 
   save_txt.onTextChange = proc (event: TextChangeEvent) =
     if save_txt.text in saveBrowse(): save_bt.text = "Overwrite"
