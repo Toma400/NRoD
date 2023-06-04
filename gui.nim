@@ -29,8 +29,10 @@ proc setMnSettings (mode: int, window: Window,
   actn.xAlign  = XAlign_Center
   actn.yAlign  = YAlign_Center
   left.padding  = (w_x/4).int
+  actn.padding  = (w_y/5).int
   left.setInnerSize(width=(w_x/2).int,  height=w_y)
   right.setInnerSize(width=(w_x/2).int, height=w_y)
+  actn.setInnerSize(width=(w_x/2).int,  height=(w_y/2).int)
 # window.iconPath = bcsd() & "/bcs/assets/graphical/bcs.png"
 # left.x      = 0
 # left.y      = 0

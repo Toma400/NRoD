@@ -446,7 +446,12 @@ else:
     if save_txt.text in saveBrowse(): save_bt.text = "Overwrite"
     else:                             save_bt.text = "Save"
 
-  # handleKeyDownEvent
+  save_bt.onClick = proc (event: ClickEvent) =
+    save(save_txt.text, player)
+
+  load_bt.onClick = proc (event: ClickEvent) =
+    player = load(load_cb.value, player)
+    updateWindowRef()
 
   window.show()
   app.run()
