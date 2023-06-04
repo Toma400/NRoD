@@ -374,6 +374,7 @@ else:
   var main   = newLayoutContainer(Layout_Horizontal)
   var left   = newLayoutContainer(Layout_Vertical)
   var right  = newLayoutContainer(Layout_Vertical)
+  var contr  = newLayoutContainer(Layout_Horizontal)
 
   # Elements
   var loc_img = newImage()
@@ -392,6 +393,7 @@ else:
                    main     = main,
                    left     = left,
                    right    = right,
+                   contr    = contr,
                    loc_label = loc_label,
                    loc_text  = player.loc.name,
                    health    = health,
