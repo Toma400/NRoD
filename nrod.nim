@@ -399,7 +399,11 @@ else:
   var main   = newLayoutContainer(Layout_Horizontal)
   var left   = newLayoutContainer(Layout_Vertical)
   var right  = newLayoutContainer(Layout_Vertical)
-  var contr  = newLayoutContainer(Layout_Horizontal) # control container   | control buttons
+  var contr  = newLayoutContainer(Layout_Horizontal) # control container   | control info
+  var cnt1   = newLayoutContainer(Layout_Horizontal)   # money
+  var cnt2   = newLayoutContainer(Layout_Horizontal)   # attack
+  var cnt3   = newLayoutContainer(Layout_Horizontal)   # defence
+  var trav   = newLayoutContainer(Layout_Horizontal) # travel container    | travel buttons
   var savn   = newLayoutContainer(Layout_Horizontal) # save/load container | save/load system
   var actn   = newLayoutContainer(Layout_Horizontal) # action container    | processing events
   var shpn   = newLayoutContainer(Layout_Horizontal) # shop container
@@ -409,6 +413,9 @@ else:
   var loc_img = newImage()
 
   var loc_label = newLabel(player.loc.name)
+  var states    = @[newLabel($player.money),
+                    newLabel($player.att),
+                    newLabel($player.def)]
   var health    = newProgressBar()
   var shop_bt   = newButton("Buy the item")
   var hunt_bt   = newButton("Hunt")
@@ -427,13 +434,21 @@ else:
         if itemBrowse(player.loc.shopData()[0][shop_cb.index]).cost > player.money:
           shop_bt.enabled = false
       else: shop_bt.enabled = false
+      states[0].text = $player.money
+      states[1].text = $player.att
+      states[2].text = $player.def
+
   proc updateWindowRef(mode: int = 1) = # put there to not clutter the code with all arguments over and over
       updateWindow(mode     = mode,       # 0 is initial, 1 is update (default is update)
                    window   = window,
+                   layouts  = {"money": cnt1,
+                               "att":   cnt2,
+                               "def":   cnt3}.toOrderedTable,
                    main     = main,
                    left     = left,
                    right    = right,
                    contr    = contr,
+                   trav     = trav,
                    savn     = savn,
                    actn     = actn,
                    shpn     = shpn,
@@ -442,6 +457,7 @@ else:
                    loc_uid   = player.loc.uid,
                    loc_label = loc_label,
                    loc_text  = player.loc.name,
+                   states    = states,
                    health    = health,
                    hp        = player.hp,
                    buttons   = {"travel": travel_bt,
