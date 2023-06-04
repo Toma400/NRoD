@@ -1,8 +1,9 @@
-# import dir_crawler
+# import dir_crawler; loadResources()
+# import dir_result
 import std/random
 import std/tables
 import strutils
-import helpers
+# import aspects
 import nigui
 import gui
 import os
@@ -174,6 +175,12 @@ proc locationBrowse(suid: string): Location =
   for loc in locations:
     if loc.uid == suid: return loc
   return LocationNomadCamp()
+
+proc returnCell* (pos: int, axis: string): int =
+  var svc: float
+  if axis.toLower == "x": svc = w_x / 100
+  else:                   svc = w_y / 100
+  return (pos.float * svc).int
 
 #==============================
 # MAIN EVENTS
@@ -374,11 +381,11 @@ else:
   var main   = newLayoutContainer(Layout_Horizontal)
   var left   = newLayoutContainer(Layout_Vertical)
   var right  = newLayoutContainer(Layout_Vertical)
-  var contr  = newLayoutContainer(Layout_Horizontal)
+  var contr  = newLayoutContainer(Layout_Horizontal) # control container | control buttons
+  var actn   = newLayoutContainer(Layout_Vertical)   # action container  | processing events
 
   # Elements
   var loc_img = newImage()
-  # loc_img.loadFromFile("assets/" & player.loc.uid & ".png")
 
   var loc_label = newLabel(player.loc.name)
   var health    = newProgressBar()
@@ -394,6 +401,7 @@ else:
                    left     = left,
                    right    = right,
                    contr    = contr,
+                   actn     = actn,
                    loc_img   = loc_img,
                    loc_uid   = player.loc.uid,
                    loc_label = loc_label,
@@ -410,7 +418,7 @@ else:
 
   left.onDraw = proc (event: DrawEvent) =
     let canvas = event.control.canvas
-    canvas.drawImage(loc_img, x=returnCell(0, AXES.X), y=returnCell(0, AXES.Y),
+    canvas.drawImage(loc_img, x=returnCell(0, "X"), y=returnCell(0, "Y"),
                               width=(w_x/2).int)
 
   travel_bt.onClick = proc (event: ClickEvent) =
