@@ -42,17 +42,18 @@ proc setMnSettings (mode: int, window: Window,
 # right.y     = w_y
 
 proc setElmSettings (loc_img: Image, loc_uid: string, loc_label: Label, loc_text: string,
-                     health: ProgressBar, hp: int, travel_cb: ComboBox, travel_dt: seq[string]) =
+                     health: ProgressBar, hp: int, travel_cb: ComboBox, travel_dt: seq[string], load_cb: ComboBox, load_data: seq[string]) =
   try:    loc_img.loadFromFile("assets/" & loc_uid & ".png")
   except: loc_img.loadFromFile("assets/q_mark.png")
   loc_label.yTextAlign = YTextAlign_Center
   loc_label.text       = loc_text
   health.value         = hp/100
   travel_cb.options    = travel_dt
+  load_cb.options      = load_data
 
 proc setLayout (window: Window,
                 main: LayoutContainer, left: LayoutContainer, right: LayoutContainer, contr: LayoutContainer, savn: LayoutContainer, actn: LayoutContainer,
-                loc_label: Label, health: ProgressBar, buttons: OrderedTable, travel_cb: ComboBox) =
+                loc_label: Label, health: ProgressBar, buttons: OrderedTable, travel_cb: ComboBox, save_txt: TextBox, load_cb: ComboBox) =
   block wContainers:
     window.add(main)
     main.add(left)
@@ -68,13 +69,17 @@ proc setLayout (window: Window,
     contr.add(travel_cb)
   block wSaveLoad:
     right.add(savn)
+    savn.add(save_txt)
+    savn.add(buttons["save"])
+    savn.add(buttons["load"])
+    savn.add(load_cb)
   block wSegments:
     right.add(actn)
 
 proc updateWindow* (mode: int, window: Window,
                     main: LayoutContainer, left: LayoutContainer, right: LayoutContainer, contr: LayoutContainer, savn: LayoutContainer, actn: LayoutContainer,
                     loc_img: Image, loc_uid: string, loc_label: Label, loc_text: string, health: ProgressBar, hp: int, buttons: OrderedTable,
-                    travel_cb: ComboBox, travel_dt: seq[string]) =
+                    travel_cb: ComboBox, travel_dt: seq[string], save_txt: TextBox, load_cb: ComboBox, load_data: seq[string]) =
 
   setMnSettings(mode   = mode,
                 window = window,
@@ -90,7 +95,9 @@ proc updateWindow* (mode: int, window: Window,
                  health    = health,
                  hp        = hp,
                  travel_cb = travel_cb,
-                 travel_dt = travel_dt)
+                 travel_dt = travel_dt,
+                 load_cb   = load_cb,
+                 load_data = load_data)
   if mode == 0: # 0 is set as initial, 1 is for update
     setLayout(window = window,
               main   = main,
@@ -102,4 +109,6 @@ proc updateWindow* (mode: int, window: Window,
               loc_label = loc_label,
               health    = health,
               buttons   = buttons,
-              travel_cb = travel_cb)
+              travel_cb = travel_cb,
+              save_txt  = save_txt,
+              load_cb   = load_cb)

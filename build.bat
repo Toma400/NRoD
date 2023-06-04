@@ -16,3 +16,11 @@ nim c --app:console --out:nrod_legacy nrod.nim
 :: If Legacy mode:
 :: - nrod_legacy.exe
 :: - nrod_legacy.bat
+::
+:: Additional possible
+:: - nrod.nim
+:: - gui.nim
+:: - aspects.nim        << not used yet
+:: "Docs"
+:: - modding_resources.md
+:: - readme.md

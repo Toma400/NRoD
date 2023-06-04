@@ -176,7 +176,13 @@ proc locationBrowse(suid: string): Location =
     if loc.uid == suid: return loc
   return LocationNomadCamp()
 
-proc returnCell* (pos: int, axis: string): int =
+proc saveBrowse(): seq[string] =
+  var files: seq[string]
+  for file in walkFiles("saves/*.ns"):
+    files.add file.replace(r"saves\", "").replace(".ns", "")
+  return files
+
+proc returnCell (pos: int, axis: string): int =
   var svc: float
   if axis.toLower == "x": svc = w_x / 100
   else:                   svc = w_y / 100
@@ -394,6 +400,10 @@ else:
   var hunt_bt   = newButton("Hunt")
   var travel_bt = newButton("Travel")
   var travel_cb = newComboBox(player.loc.roadsData()[1])
+  var save_txt  = newTextBox()
+  var save_bt   = newButton("Save") # up to change when it's overwrite
+  var load_bt   = newButton("Load")
+  var load_cb   = newComboBox(saveBrowse())
 
   proc updateWindowRef(mode: int = 1) = # put there to not clutter the code with all arguments over and over
       updateWindow(mode     = mode,       # 0 is initial, 1 is update (default is update)
@@ -412,9 +422,14 @@ else:
                    hp        = player.hp,
                    buttons   = {"travel": travel_bt,
                                 "shop":   shop_bt,
-                                "hunt":   hunt_bt}.toOrderedTable,
+                                "hunt":   hunt_bt,
+                                "save":   save_bt,
+                                "load":   load_bt}.toOrderedTable,
                    travel_cb = travel_cb,
-                   travel_dt = player.loc.roadsData()[1])
+                   travel_dt = player.loc.roadsData()[1],
+                   save_txt  = save_txt,
+                   load_cb   = load_cb,
+                   load_data = saveBrowse())
 
   updateWindowRef(mode=0)
 
@@ -426,6 +441,10 @@ else:
   travel_bt.onClick = proc (event: ClickEvent) =
     player.loc = locationBrowse(player.loc.roadsData()[0][travel_cb.index])
     updateWindowRef()
+
+  save_txt.onTextChange = proc (event: TextChangeEvent) =
+    if save_txt.text in saveBrowse(): save_bt.text = "Overwrite"
+    else:                             save_bt.text = "Save"
 
   # handleKeyDownEvent
 
