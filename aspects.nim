@@ -28,3 +28,4 @@ type Player* = object
   att*:   int
   def*:   int
   loc*:   Location
+  hunt*:  bool

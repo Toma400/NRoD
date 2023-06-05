@@ -20,9 +20,11 @@ proc setMnSettings (mode: int, window: Window, layouts: OrderedTable[string, Lay
   savn.frame    = newFrame("Save/Load")
   shpn.frame    = newFrame("Shop")
   hntn.frame    = newFrame("Hunt")
-  layouts["money"].frame = newFrame("Money")
-  layouts["att"].frame   = newFrame("Attack")
-  layouts["def"].frame   = newFrame("Defence")
+  layouts["money"].frame  = newFrame("Money")
+  layouts["att"].frame    = newFrame("Attack")
+  layouts["def"].frame    = newFrame("Defence")
+  layouts["hunt_p"].frame = newFrame("Hunting")
+  layouts["hunt_c"].frame = newFrame("Creature")
   left.xAlign  = XAlign_Center
   left.yAlign  = YAlign_Center
   right.xAlign = XAlign_Center
@@ -39,12 +41,18 @@ proc setMnSettings (mode: int, window: Window, layouts: OrderedTable[string, Lay
   shpn.yAlign  = YAlign_Center
   hntn.xAlign  = XAlign_Center
   hntn.yAlign  = YAlign_Center
-  layouts["money"].xAlign = XAlign_Center
-  layouts["att"].xAlign   = XAlign_Center
-  layouts["def"].xAlign   = XAlign_Center
-  layouts["money"].yAlign = YAlign_Center
-  layouts["att"].yAlign   = YAlign_Center
-  layouts["def"].yAlign   = YAlign_Center
+  layouts["money"].xAlign  = XAlign_Center
+  layouts["att"].xAlign    = XAlign_Center
+  layouts["def"].xAlign    = XAlign_Center
+  layouts["hunt_p"].xAlign = XAlign_Center
+  layouts["hunt_c"].xAlign = XAlign_Center
+  layouts["hunt_d"].xAlign = XAlign_Center
+  layouts["money"].yAlign  = YAlign_Center
+  layouts["att"].yAlign    = YAlign_Center
+  layouts["def"].yAlign    = YAlign_Center
+  layouts["hunt_p"].yAlign = YAlign_Center
+  layouts["hunt_c"].yAlign = YAlign_Center
+  layouts["hunt_d"].yAlign = YAlign_Center
   left.padding  = (w_x/4).int
   # actn.padding  = (w_y/6).int
   left.setInnerSize(width=(w_x/2).int,  height=w_y)
@@ -65,14 +73,15 @@ proc setElmSettings (loc_img: Image, loc_uid: string, loc_label: Label, loc_text
                      load_cb: ComboBox, load_data: seq[string]) =
   try:    loc_img.loadFromFile("assets/" & loc_uid & ".png")
   except: loc_img.loadFromFile("assets/q_mark.png")
-  loc_label.yTextAlign = YTextAlign_Center
-  loc_label.text       = loc_text
-  health.value         = hp/100
-  travel_cb.options    = travel_dt
-  shop_cb.options      = shop_dt
-  load_cb.options      = load_data
+  loc_label.yTextAlign    = YTextAlign_Center
+  loc_label.text          = loc_text
+  health.value            = hp/100
+  travel_cb.options       = travel_dt
+  shop_cb.options         = shop_dt
+  load_cb.options         = load_data
 
-proc setLayout (window: Window, layouts: OrderedTable[string, LayoutContainer], main: LayoutContainer, left: LayoutContainer, right: LayoutContainer,
+proc setLayout (window: Window, layouts: OrderedTable[string, LayoutContainer], labels: OrderedTable[string, Label],
+                main: LayoutContainer, left: LayoutContainer, right: LayoutContainer,
                 contr: LayoutContainer, trav: LayoutContainer, savn: LayoutContainer, actn: LayoutContainer, shpn: LayoutContainer, hntn: LayoutContainer,
                 loc_label: Label, states: seq[Label], health: ProgressBar, buttons: OrderedTable[string, Button], travel_cb: ComboBox, shop_cb: ComboBox, save_txt: TextBox, load_cb: ComboBox) =
   block wContainers:
@@ -108,9 +117,16 @@ proc setLayout (window: Window, layouts: OrderedTable[string, LayoutContainer], 
     shpn.add(buttons["shop"])
     shpn.add(shop_cb)
   block wHunt:
-    hntn.add(buttons["hunt"])
+    hntn.add(layouts["hunt_d"])
+    layouts["hunt_d"].add(buttons["hunt"])
+    layouts["hunt_d"].add(buttons["flee"])
+    hntn.add(layouts["hunt_p"])
+    hntn.add(layouts["hunt_c"])
+    layouts["hunt_p"].add(labels["hunt_p"])
+    layouts["hunt_c"].add(labels["hunt_c"])
 
-proc updateWindow* (mode: int, window: Window, layouts: OrderedTable[string, LayoutContainer], main: LayoutContainer, left: LayoutContainer, right: LayoutContainer,
+proc updateWindow* (mode: int, window: Window, layouts: OrderedTable[string, LayoutContainer], labels: OrderedTable[string, Label],
+                    main: LayoutContainer, left: LayoutContainer, right: LayoutContainer,
                     contr: LayoutContainer, trav: LayoutContainer, savn: LayoutContainer, actn: LayoutContainer, shpn: LayoutContainer, hntn: LayoutContainer,
                     loc_img: Image, loc_uid: string, loc_label: Label, loc_text: string, states: seq[Label], health: ProgressBar, hp: int, buttons: OrderedTable[string, Button],
                     travel_cb: ComboBox, travel_dt: seq[string], shop_cb: ComboBox, shop_dt: seq[string],
@@ -142,6 +158,7 @@ proc updateWindow* (mode: int, window: Window, layouts: OrderedTable[string, Lay
   if mode == 0: # 0 is set as initial, 1 is for update
     setLayout(window  = window,
               layouts = layouts,
+              labels  = labels,
               main   = main,
               left   = left,
               right  = right,

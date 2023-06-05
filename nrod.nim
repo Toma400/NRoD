@@ -160,8 +160,9 @@ type Player = object
   att:   int
   def:   int
   loc:   Location
+  hunt:  bool
 proc playerNew(): Player =
-  return Player(hp: 100, money: 0, inv: @[], att: rand(1..3), def: 0, loc: LocationNomadCamp())
+  return Player(hp: 100, money: 0, inv: @[], att: rand(1..3), def: 0, loc: LocationNomadCamp(), hunt: false)
 proc addToInv(self: var Player, item: Item) =
   self.inv.add(item)
   self.att += item.att
@@ -406,8 +407,11 @@ else:
   var trav   = newLayoutContainer(Layout_Horizontal) # travel container    | travel buttons
   var savn   = newLayoutContainer(Layout_Horizontal) # save/load container | save/load system
   var actn   = newLayoutContainer(Layout_Horizontal) # action container    | processing events
-  var shpn   = newLayoutContainer(Layout_Horizontal) # shop container
+  var shpn   = newLayoutContainer(Layout_Vertical)   # shop container
   var hntn   = newLayoutContainer(Layout_Vertical)   # hunt container
+  var hntd   = newLayoutContainer(Layout_Horizontal) # hunt decisions
+  var hnta   = newLayoutContainer(Layout_Horizontal) # hunt player
+  var hntc   = newLayoutContainer(Layout_Horizontal) # hunt creature
 
   # Elements
   var loc_img = newImage()
@@ -419,31 +423,52 @@ else:
   var health    = newProgressBar()
   var shop_bt   = newButton("Buy the item")
   var hunt_bt   = newButton("Hunt")
+  var flee_bt   = newButton("Flee")
   var travel_bt = newButton("Travel")
   var travel_cb = newComboBox(player.loc.roadsData()[1])
   var shop_cb   = newComboBox(player.loc.shopData()[1])
+  var hnta_lab  = newLabel(" ")
+  var hntc_lab  = newLabel(" ")
   var save_txt  = newTextBox()
   var save_bt   = newButton("Save") # up to change when it's overwrite
   var load_bt   = newButton("Load")
   var load_cb   = newComboBox(saveBrowse())
 
-  proc updateStates() =
-      if shop(player.loc).len > 0: shop_bt.enabled = true;  shop_bt.text = "Buy the item"
-      else:                        shop_bt.enabled = false; shop_bt.text = "No shop in this location"
-      if shop_cb.index >= 0:
-        if itemBrowse(player.loc.shopData()[0][shop_cb.index]).cost > player.money:
-          shop_bt.enabled = false
-      else: shop_bt.enabled = false
-      states[0].text = $player.money
-      states[1].text = $player.att
-      states[2].text = $player.def
+  proc updateStates(mode: int = 0) =
+      # MODES
+      # 0 - general
+      # 1 - shop
+      # 2 - hunt
+      # 3 - statistics
+      if mode == 0 or mode == 1:
+        if shop(player.loc).len > 0: shop_bt.enabled = true;  shop_bt.text = "Buy the item"
+        else:                        shop_bt.enabled = false; shop_bt.text = "No shop in this location"
+        if shop_cb.index >= 0:
+          if itemBrowse(player.loc.shopData()[0][shop_cb.index]).cost > player.money:
+            shop_bt.enabled = false
+        else: shop_bt.enabled = false
+      if mode == 0 or mode == 2:
+        if player.loc.beasts().len > 0:
+          if player.hunt: travel_bt.enabled = false; save_bt.enabled = false; flee_bt.enabled = true;  hunt_bt.enabled = false
+          else:           travel_bt.enabled = true;  save_bt.enabled = true;  flee_bt.enabled = false; hunt_bt.enabled = true
+        else:
+          travel_bt.enabled = true; save_bt.enabled = true; hunt_bt.enabled = false; flee_bt.enabled = false
+      if mode == 0 or mode == 3:
+        states[0].text = $player.money
+        states[1].text = $player.att
+        states[2].text = $player.def
 
   proc updateWindowRef(mode: int = 1) = # put there to not clutter the code with all arguments over and over
       updateWindow(mode     = mode,       # 0 is initial, 1 is update (default is update)
                    window   = window,
-                   layouts  = {"money": cnt1,
-                               "att":   cnt2,
-                               "def":   cnt3}.toOrderedTable,
+                   layouts  = {"money":  cnt1,
+                               "att":    cnt2,
+                               "def":    cnt3,
+                               "hunt_d": hntd,
+                               "hunt_p": hnta,
+                               "hunt_c": hntc}.toOrderedTable,
+                   labels   = {"hunt_p": hnta_lab,
+                               "hunt_c": hntc_lab}.toOrderedTable,
                    main     = main,
                    left     = left,
                    right    = right,
@@ -463,6 +488,7 @@ else:
                    buttons   = {"travel": travel_bt,
                                 "shop":   shop_bt,
                                 "hunt":   hunt_bt,
+                                "flee":   flee_bt,
                                 "save":   save_bt,
                                 "load":   load_bt}.toOrderedTable,
                    travel_cb = travel_cb,
@@ -472,7 +498,7 @@ else:
                    save_txt  = save_txt,
                    load_cb   = load_cb,
                    load_data = saveBrowse())
-      updateStates()
+      updateStates(mode=0)
 
   updateWindowRef(mode=0)
 
@@ -486,12 +512,20 @@ else:
     updateWindowRef()
 
   shop_cb.onChange = proc (event: ComboBoxChangeEvent) =
-    updateStates()
+    updateStates(mode=1)
 
   shop_bt.onClick = proc (event: ClickEvent) =
     if shop_cb.index >= 0:
       discard player.buy(itemBrowse(player.loc.shopData()[0][shop_cb.index]))
-    updateStates()
+    updateStates(mode=1)
+
+  hunt_bt.onClick = proc (event: ClickEvent) =
+    player.hunt = true
+    updateStates(mode=2)
+
+  flee_bt.onClick = proc (event: ClickEvent) =
+    player.hunt = false
+    updateStates(mode=2)
 
   save_txt.onTextChange = proc (event: TextChangeEvent) =
     if save_txt.text in saveBrowse(): save_bt.text = "Overwrite"
@@ -499,6 +533,7 @@ else:
 
   save_bt.onClick = proc (event: ClickEvent) =
     save(save_txt.text, player)
+    save_bt.text = "Saved!"
 
   load_bt.onClick = proc (event: ClickEvent) =
     player = load(load_cb.value, player)
