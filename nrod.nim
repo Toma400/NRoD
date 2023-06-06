@@ -4,6 +4,7 @@ import std/options
 import std/random
 import std/tables
 import strutils
+# import registry
 # import aspects
 import nigui
 import gui
@@ -14,7 +15,7 @@ import os
 # ---
 # (c) 2023 Tomasz Stępień, All Rights Reserved
 #----------------------------------------------
-let nrod_v   = "0.2" # version
+let nrod_v   = "0.3" # version
 #----------------------------------------------
 let args     = os.commandLineParams()
 var terminal = "-terminal" in args
@@ -27,8 +28,6 @@ var terminal = "-terminal" in args
 #   - potions/food
 # - pushing locations/items/creatures onto folders
 #   (gathering .nim files by some crawler)
-# - GUI
-# - location images
 
 # - collab with Kari? (rybiczki-mutanty)
 
@@ -137,18 +136,6 @@ proc roadsData(loc: Location): seq[seq[string]] =
     loc_uids.add(locg.uid)
     loc_names.add(locg.name)
   return @[loc_uids, loc_names]
-
-proc roadsUid(loc: Location): seq[string] =
-  var loc_seq: seq[string]
-  for locg in loc.roads():
-    loc_seq.add(locg.uid)
-  return loc_seq
-
-proc roadsNames(loc: Location): seq[string] =
-  var loc_seq: seq[string]
-  for locg in loc.roads():
-    loc_seq.add(locg.name)
-  return loc_seq
 
 # list of beasts in locations
 proc beasts(loc: Location): seq[Beast] =
@@ -471,7 +458,7 @@ else:
         else: shop_bt.enabled = false
       if mode == 0 or mode == 2:
         if player.loc.beasts().len > 0:
-          if player.hunt: travel_bt.enabled = false; save_bt.enabled = false; flee_bt.enabled = true;  hunt_bt.enabled = false; att_bt.enabled = true
+          if player.hunt: travel_bt.enabled = false; save_bt.enabled = false; flee_bt.enabled = true;  hunt_bt.enabled = false; att_bt.enabled = true; shop_bt.enabled = false
           else:           travel_bt.enabled = true;  save_bt.enabled = true;  flee_bt.enabled = false; hunt_bt.enabled = true;  att_bt.enabled = false
         else:
           travel_bt.enabled = true; save_bt.enabled = true; hunt_bt.enabled = false; flee_bt.enabled = false; att_bt.enabled = false
@@ -490,6 +477,7 @@ else:
       hntc_lab.text = " "
       hntb_lab.text = " "
       hntb_hp.text  = " "
+      updateStates(mode=1)
       updateStates(mode=3)
 
   proc updateWindowRef(mode: int = 1) = # put there to not clutter the code with all arguments over and over
