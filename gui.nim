@@ -10,10 +10,9 @@ proc setMnSettings (mode: int, window: Window, layouts: OrderedTable[string, Lay
   if mode == 0: # initial value
     window.width  = w_x
     window.height = w_y
-
   left.frame    = newFrame()
   right.frame   = newFrame()
-  if mode != 2:
+  if mode != 2: # exempted from mode=2 (travel)
     contr.frame   = newFrame()
     trav.frame    = newFrame("Travel")
     savn.frame    = newFrame("Save/Load")
@@ -56,29 +55,22 @@ proc setMnSettings (mode: int, window: Window, layouts: OrderedTable[string, Lay
     layouts["hunt_d"].yAlign = YAlign_Center
     layouts["hunt_b"].yAlign = YAlign_Center
     left.padding  = (w_x/4).int
-    # actn.padding  = (w_y/6).int
     left.setInnerSize(width=(w_x/2).int,  height=w_y)
     right.setInnerSize(width=(w_x/2).int, height=w_y)
     actn.setInnerSize(width=(w_x/2).int,  height=(w_y/2).int)
-    window.iconPath = "assets/nr_nomad_camp.png"# bcsd() & "/bcs/assets/graphical/bcs.png"
-# left.x      = 0
-# left.y      = 0
-# left.width  = w_x/2.int
-# left.height = w_y
-# right.x     = w_x/2.int
-# right.y     = 0
-# right.width = w_x
-# right.y     = w_y
+    window.iconPath = "assets/nr_nomad_camp.png"
 
-proc setElmSettings (loc_label: Label, loc_text: string, health: ProgressBar, hp: int,
+proc setElmSettings (mode: int, loc_label: Label, loc_text: string, health: ProgressBar, hp: int,
                      travel_cb: ComboBox, travel_dt: seq[string], shop_cb: ComboBox, shop_dt: seq[string],
                      load_cb: ComboBox, load_data: seq[string]) =
-  loc_label.yTextAlign    = YTextAlign_Center
+  if mode == 0:
+    loc_label.yTextAlign  = YTextAlign_Center
   loc_label.text          = " " & loc_text & " "
   health.value            = hp/100
   travel_cb.options       = travel_dt
   shop_cb.options         = shop_dt
-  load_cb.options         = load_data
+  if mode != 2:
+    load_cb.options       = load_data
 
 proc setLayout (window: Window, layouts: OrderedTable[string, LayoutContainer], labels: OrderedTable[string, Label],
                 main: LayoutContainer, left: LayoutContainer, right: LayoutContainer,
@@ -148,7 +140,8 @@ proc updateWindow* (mode: int, window: Window, layouts: OrderedTable[string, Lay
                 actn   = actn,
                 shpn   = shpn,
                 hntn   = hntn)
-  setElmSettings(loc_label = loc_label,
+  setElmSettings(mode      = mode,
+                 loc_label = loc_label,
                  loc_text  = loc_text,
                  health    = health,
                  hp        = hp,
