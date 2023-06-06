@@ -71,9 +71,11 @@ proc ItemSmallHealingPotion(): Item =
   return Item(name: "Small Healing Potion", uid: "nr_small_healing_potion", cost: 9, att: 0, def: 0, eff: true)
 proc ItemMediumHealingPotion(): Item =
   return Item(name: "Medium Healing Potion", uid: "nr_medium_healing_potion", cost: 15, att: 0, def: 0, eff: true)
+proc ItemLargeHealingPotion(): Item =
+  return Item(name: "Large Healing Potion",  uid: "nr_large_healing_potion",  cost: 27, att: 0, def: 0, eff: true)
 
 # item registry (should be filled for save system)
-let items = @[ItemMachete(), ItemSturdyTunic(), ItemSmallHealingPotion(), ItemMediumHealingPotion()]
+let items = @[ItemMachete(), ItemSturdyTunic(), ItemSmallHealingPotion(), ItemMediumHealingPotion(), ItemLargeHealingPotion()]
 
 # <--- Beast --->
 type Beast = object
@@ -111,7 +113,7 @@ let locations = @[LocationNomadCamp(), LocationNomadCampMarket(), LocationWastes
 
 # shops in locations
 proc shop(loc: Location): seq[Item] =
-  if loc.uid == LocationNomadCampMarket().uid: return @[ItemMachete(), ItemSturdyTunic(), ItemSmallHealingPotion(), ItemMediumHealingPotion()]
+  if loc.uid == LocationNomadCampMarket().uid: return @[ItemMachete(), ItemSturdyTunic(), ItemSmallHealingPotion(), ItemMediumHealingPotion(), ItemLargeHealingPotion()]
   else: return @[]
 
 proc shopData(loc: Location): seq[seq[string]] =
@@ -152,8 +154,9 @@ type Player = object
   loc:   Location
   hunt:  bool
   crea:  Option[Beast]
+  crew:  int
 proc playerNew(): Player =
-  return Player(hp: 100, money: 0, inv: @[], att: rand(1..3), def: 0, loc: LocationNomadCamp(), hunt: false, crea: none(Beast))
+  return Player(hp: 100, money: 0, inv: @[], att: rand(1..3), def: 0, loc: LocationNomadCamp(), hunt: false, crea: none(Beast), crew: 0)
 proc addToInv(self: var Player, item: Item) =
   self.inv.add(item)
   self.att += item.att
@@ -162,6 +165,7 @@ proc use(player: var Player, item: Item) =
   if item.eff:
     if   item.uid == ItemSmallHealingPotion().uid:  player.hp = player.hp + 15
     elif item.uid == ItemMediumHealingPotion().uid: player.hp = player.hp + 30
+    elif item.uid == ItemLargeHealingPotion().uid:  player.hp = player.hp + 60
   if player.hp > 100: player.hp = 100 # fixing overvaluing
 
 #==============================
@@ -240,8 +244,12 @@ proc shop(player: var Player) =
 #==============================
 # FIGHT
 #==============================
+proc huntRew(monster: var Beast): int =
+  return rand(10..20) + (monster.hp/10).int
+
 proc hunt(player: var Player) =
   var monster = sample(player.loc.beasts())
+  player.crew = huntRew(monster)
   echo "You start the fight with: ", monster.name, ". Be ready!"
   echo "If you want to flee, use 'x' key"
   sleep 2000
@@ -257,9 +265,8 @@ proc hunt(player: var Player) =
     player.hp  -= (mt - monster.def)
 
     if monster.hp <= 0:
-      var money = rand(10..20)
-      echo "You slayed that beast! You earn ", $money, "$ from it."
-      player.money += money
+      echo "You slayed that beast! You earn ", $player.crew, "$ from it."
+      player.money += player.crew
       var fin = readLine(stdin)
       break
     elif player.hp <= 0:
@@ -438,9 +445,9 @@ else:
 
   proc guiDeath() =
     travel_bt.enabled = false
-    save_bt.enabled   = false
     hunt_bt.enabled   = false
     shop_bt.enabled   = false
+    save_bt.text      = "New game"
     loc_label.text    = "You are dead"
 
   proc updateStates(mode: int = 0) =
@@ -547,6 +554,7 @@ else:
 
   hunt_bt.onClick = proc (event: ClickEvent) =
     player.crea = some(sample(player.loc.beasts()))
+    player.crew = huntRew(player.crea.get)
     player.hunt = true
     hntb_lab.text = player.crea.get.name
     hntb_hp.text  = "» " & $player.crea.get.hp & " «"
@@ -563,8 +571,7 @@ else:
     health.value  = player.hp/100
     hntb_hp.text  = "» " & $player.crea.get.hp & " «"
     if player.crea.get.hp < 1:
-      var money = rand(10..20)
-      player.money += money
+      player.money += player.crew
       endFight()
     if player.hp < 1:
       endFight()
@@ -579,8 +586,12 @@ else:
     else:                             save_bt.text = "Save"
 
   save_bt.onClick = proc (event: ClickEvent) =
-    save(save_txt.text, player)
-    save_bt.text = "Saved!"
+    if player.hp > 0:
+      save(save_txt.text, player)
+      save_bt.text = "Saved!"
+    else:
+      player = playerNew()
+      updateWindowRef(mode=2)
 
   load_bt.onClick = proc (event: ClickEvent) =
     player = load(load_cb.value, player)

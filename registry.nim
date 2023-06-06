@@ -16,9 +16,11 @@ proc ItemSmallHealingPotion*(): Item =
   return Item(name: "Small Healing Potion",  uid: "nr_small_healing_potion",  cost: 9,  att: 0, def: 0, eff: true)
 proc ItemMediumHealingPotion*(): Item =
   return Item(name: "Medium Healing Potion", uid: "nr_medium_healing_potion", cost: 15, att: 0, def: 0, eff: true)
+proc ItemLargeHealingPotion*(): Item =
+  return Item(name: "Large Healing Potion",  uid: "nr_large_healing_potion",  cost: 27, att: 0, def: 0, eff: true)
 
 # Item Registry
-let items* = @[ItemMachete(), ItemSturdyTunic(), ItemSmallHealingPotion(), ItemMediumHealingPotion()]
+let items* = @[ItemMachete(), ItemSturdyTunic(), ItemSmallHealingPotion(), ItemMediumHealingPotion(), ItemLargeHealingPotion()]
 
 ##########################################################################################################
 # BEASTS #
@@ -56,7 +58,7 @@ let locations* = @[LocationNomadCamp(), LocationNomadCampMarket(), LocationWaste
 
 # Shop Item Choice Registry
 proc shop*(loc: Location): seq[Item] =
-  if loc.uid == LocationNomadCampMarket().uid: return @[ItemMachete(), ItemSturdyTunic(), ItemSmallHealingPotion(), ItemMediumHealingPotion()]
+  if loc.uid == LocationNomadCampMarket().uid: return @[ItemMachete(), ItemSturdyTunic(), ItemSmallHealingPotion(), ItemMediumHealingPotion(), ItemLargeHealingPotion()]
   else: return @[]
 
 # Location Connections Registry
@@ -76,4 +78,5 @@ proc use*(player: var Player, item: Item) =
   if item.eff:
     if   item.uid == ItemSmallHealingPotion().uid:  player.hp = player.hp + 15
     elif item.uid == ItemMediumHealingPotion().uid: player.hp = player.hp + 30
+    elif item.uid == ItemLargeHealingPotion().uid:  player.hp = player.hp + 60
   if player.hp > 100: player.hp = 100 # fixing overvaluing

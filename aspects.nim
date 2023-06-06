@@ -32,3 +32,4 @@ type Player* = object
   loc*:   Location
   hunt*:  bool
   crea*:  Option(Beast)
+  crew*:  int
