@@ -1,5 +1,6 @@
 # import dir_crawler; loadResources()
 # import dir_result
+import std/options
 import std/random
 import std/tables
 import strutils
@@ -161,8 +162,9 @@ type Player = object
   def:   int
   loc:   Location
   hunt:  bool
+  crea:  Option[Beast]
 proc playerNew(): Player =
-  return Player(hp: 100, money: 0, inv: @[], att: rand(1..3), def: 0, loc: LocationNomadCamp(), hunt: false)
+  return Player(hp: 100, money: 0, inv: @[], att: rand(1..3), def: 0, loc: LocationNomadCamp(), hunt: false, crea: none(Beast))
 proc addToInv(self: var Player, item: Item) =
   self.inv.add(item)
   self.att += item.att
@@ -412,9 +414,17 @@ else:
   var hntd   = newLayoutContainer(Layout_Horizontal) # hunt decisions
   var hnta   = newLayoutContainer(Layout_Horizontal) # hunt player
   var hntc   = newLayoutContainer(Layout_Horizontal) # hunt creature
+  var hntb   = newLayoutContainer(Layout_Horizontal) # hunt beast info
 
   # Elements
   var loc_img = newImage()
+  # --- prerendering of images ---
+  var loc_imt = newOrderedTable[string, Image]()
+  for loc in locations:
+    var tmp_img = newImage()
+    try:    tmp_img.loadFromFile("assets/" & loc.uid & ".png")
+    except: tmp_img.loadFromFile("assets/q_mark.png")
+    loc_imt[loc.uid] = tmp_img
 
   var loc_label = newLabel(player.loc.name)
   var states    = @[newLabel($player.money),
@@ -459,14 +469,15 @@ else:
         states[2].text = $player.def
 
   proc updateWindowRef(mode: int = 1) = # put there to not clutter the code with all arguments over and over
-      updateWindow(mode     = mode,       # 0 is initial, 1 is update (default is update)
+      updateWindow(mode     = mode,       # 0 is initial, 1 is update (default), 2 is minor update
                    window   = window,
                    layouts  = {"money":  cnt1,
                                "att":    cnt2,
                                "def":    cnt3,
                                "hunt_d": hntd,
                                "hunt_p": hnta,
-                               "hunt_c": hntc}.toOrderedTable,
+                               "hunt_c": hntc,
+                               "hunt_b": hntb}.toOrderedTable,
                    labels   = {"hunt_p": hnta_lab,
                                "hunt_c": hntc_lab}.toOrderedTable,
                    main     = main,
@@ -479,6 +490,7 @@ else:
                    shpn     = shpn,
                    hntn     = hntn,
                    loc_img   = loc_img,
+                   loc_imt   = loc_imt,
                    loc_uid   = player.loc.uid,
                    loc_label = loc_label,
                    loc_text  = player.loc.name,
@@ -504,7 +516,8 @@ else:
 
   left.onDraw = proc (event: DrawEvent) =
     let canvas = event.control.canvas
-    canvas.drawImage(loc_img, x=returnCell(0, "X"), y=returnCell(0, "Y"),
+    canvas.drawImage(loc_img, x=returnCell(0, "X"), #loc_imt[player.loc.uid]
+                              y=returnCell(0, "Y"),
                               width=(w_x/2).int)
 
   travel_bt.onClick = proc (event: ClickEvent) =
@@ -520,10 +533,12 @@ else:
     updateStates(mode=1)
 
   hunt_bt.onClick = proc (event: ClickEvent) =
+    player.crea = some(sample(player.loc.beasts()))
     player.hunt = true
     updateStates(mode=2)
 
   flee_bt.onClick = proc (event: ClickEvent) =
+    player.crea = none(Beast)
     player.hunt = false
     updateStates(mode=2)
 

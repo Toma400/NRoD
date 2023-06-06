@@ -1,3 +1,5 @@
+import std/options
+
 # <--- Item --->
 type Item* = object
   name*: string
@@ -29,3 +31,4 @@ type Player* = object
   def*:   int
   loc*:   Location
   hunt*:  bool
+  crea*:  Option(Beast)

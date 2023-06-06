@@ -2,17 +2,14 @@ import std/tables
 import nigui
 import nrod
 
-let w_x* = 730
-let w_y* = 430
+let w_x* = 830
+let w_y* = 490
 
 proc setMnSettings (mode: int, window: Window, layouts: OrderedTable[string, LayoutContainer], left: LayoutContainer, right: LayoutContainer,
                     contr: LayoutContainer, trav: LayoutContainer, savn: LayoutContainer, actn: LayoutContainer, shpn: LayoutContainer, hntn: LayoutContainer) =
   if mode == 0: # initial value
     window.width  = w_x
     window.height = w_y
-  else:         # retriggered with update
-    window.width  = window.width
-    window.height = window.height
   left.frame    = newFrame()
   right.frame   = newFrame()
   contr.frame   = newFrame()
@@ -25,6 +22,7 @@ proc setMnSettings (mode: int, window: Window, layouts: OrderedTable[string, Lay
   layouts["def"].frame    = newFrame("Defence")
   layouts["hunt_p"].frame = newFrame("Hunting")
   layouts["hunt_c"].frame = newFrame("Creature")
+  layouts["hunt_b"].frame = newFrame("Beast Info")
   left.xAlign  = XAlign_Center
   left.yAlign  = YAlign_Center
   right.xAlign = XAlign_Center
@@ -47,12 +45,14 @@ proc setMnSettings (mode: int, window: Window, layouts: OrderedTable[string, Lay
   layouts["hunt_p"].xAlign = XAlign_Center
   layouts["hunt_c"].xAlign = XAlign_Center
   layouts["hunt_d"].xAlign = XAlign_Center
+  layouts["hunt_b"].xAlign = XAlign_Center
   layouts["money"].yAlign  = YAlign_Center
   layouts["att"].yAlign    = YAlign_Center
   layouts["def"].yAlign    = YAlign_Center
   layouts["hunt_p"].yAlign = YAlign_Center
   layouts["hunt_c"].yAlign = YAlign_Center
   layouts["hunt_d"].yAlign = YAlign_Center
+  layouts["hunt_b"].yAlign = YAlign_Center
   left.padding  = (w_x/4).int
   # actn.padding  = (w_y/6).int
   left.setInnerSize(width=(w_x/2).int,  height=w_y)
@@ -68,11 +68,13 @@ proc setMnSettings (mode: int, window: Window, layouts: OrderedTable[string, Lay
 # right.width = w_x
 # right.y     = w_y
 
-proc setElmSettings (loc_img: Image, loc_uid: string, loc_label: Label, loc_text: string,
+proc setElmSettings (loc_img: Image, loc_imt: OrderedTableRef[string, Image], loc_uid: string, loc_label: Label, loc_text: string,
                      health: ProgressBar, hp: int, travel_cb: ComboBox, travel_dt: seq[string], shop_cb: ComboBox, shop_dt: seq[string],
                      load_cb: ComboBox, load_data: seq[string]) =
+  # ---- this section is not-prerended form
   try:    loc_img.loadFromFile("assets/" & loc_uid & ".png")
   except: loc_img.loadFromFile("assets/q_mark.png")
+  # ---- this section is not-prerended form
   loc_label.yTextAlign    = YTextAlign_Center
   loc_label.text          = loc_text
   health.value            = hp/100
@@ -124,11 +126,13 @@ proc setLayout (window: Window, layouts: OrderedTable[string, LayoutContainer], 
     hntn.add(layouts["hunt_c"])
     layouts["hunt_p"].add(labels["hunt_p"])
     layouts["hunt_c"].add(labels["hunt_c"])
+    hntn.add(layouts["hunt_b"])
 
 proc updateWindow* (mode: int, window: Window, layouts: OrderedTable[string, LayoutContainer], labels: OrderedTable[string, Label],
                     main: LayoutContainer, left: LayoutContainer, right: LayoutContainer,
                     contr: LayoutContainer, trav: LayoutContainer, savn: LayoutContainer, actn: LayoutContainer, shpn: LayoutContainer, hntn: LayoutContainer,
-                    loc_img: Image, loc_uid: string, loc_label: Label, loc_text: string, states: seq[Label], health: ProgressBar, hp: int, buttons: OrderedTable[string, Button],
+                    loc_img: Image, loc_imt: OrderedTableRef[string, Image], loc_uid: string, loc_label: Label, loc_text: string,
+                    states: seq[Label], health: ProgressBar, hp: int, buttons: OrderedTable[string, Button],
                     travel_cb: ComboBox, travel_dt: seq[string], shop_cb: ComboBox, shop_dt: seq[string],
                     save_txt: TextBox, load_cb: ComboBox, load_data: seq[string]) =
 
@@ -144,6 +148,7 @@ proc updateWindow* (mode: int, window: Window, layouts: OrderedTable[string, Lay
                 shpn   = shpn,
                 hntn   = hntn)
   setElmSettings(loc_img   = loc_img,
+                 loc_imt   = loc_imt,
                  loc_uid   = loc_uid,
                  loc_label = loc_label,
                  loc_text  = loc_text,
