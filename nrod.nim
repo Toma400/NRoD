@@ -69,10 +69,12 @@ proc ItemMachete(): Item =
 proc ItemSturdyTunic(): Item =
   return Item(name: "Sturdy Tunic", uid: "nr_sturdy_tunic", cost: 30, att: 0, def: 3, eff: false)
 proc ItemSmallHealingPotion(): Item =
-  return Item(name: "Small Healing Potion", uid: "nr_small_healing_potion", cost: 10, att: 0, def: 0, eff: true)
+  return Item(name: "Small Healing Potion", uid: "nr_small_healing_potion", cost: 9, att: 0, def: 0, eff: true)
+proc ItemMediumHealingPotion(): Item =
+  return Item(name: "Medium Healing Potion", uid: "nr_medium_healing_potion", cost: 15, att: 0, def: 0, eff: true)
 
 # item registry (should be filled for save system)
-let items = @[ItemMachete(), ItemSturdyTunic(), ItemSmallHealingPotion()]
+let items = @[ItemMachete(), ItemSturdyTunic(), ItemSmallHealingPotion(), ItemMediumHealingPotion()]
 
 # <--- Beast --->
 type Beast = object
@@ -110,7 +112,7 @@ let locations = @[LocationNomadCamp(), LocationNomadCampMarket(), LocationWastes
 
 # shops in locations
 proc shop(loc: Location): seq[Item] =
-  if loc.uid == LocationNomadCampMarket().uid: return @[ItemMachete(), ItemSturdyTunic(), ItemSmallHealingPotion()]
+  if loc.uid == LocationNomadCampMarket().uid: return @[ItemMachete(), ItemSturdyTunic(), ItemSmallHealingPotion(), ItemMediumHealingPotion()]
   else: return @[]
 
 proc shopData(loc: Location): seq[seq[string]] =
@@ -171,7 +173,8 @@ proc addToInv(self: var Player, item: Item) =
   self.def += item.def
 proc use(player: var Player, item: Item) =
   if item.eff:
-    if item.uid == ItemSmallHealingPotion().uid: player.hp = player.hp + 15
+    if   item.uid == ItemSmallHealingPotion().uid:  player.hp = player.hp + 15
+    elif item.uid == ItemMediumHealingPotion().uid: player.hp = player.hp + 30
   if player.hp > 100: player.hp = 100 # fixing overvaluing
 
 #==============================
@@ -474,6 +477,7 @@ else:
         else:
           travel_bt.enabled = true; save_bt.enabled = true; hunt_bt.enabled = false; flee_bt.enabled = false; att_bt.enabled = false
       if mode == 0 or mode == 3:
+        health.value   = player.hp/100
         states[0].text = $player.money
         states[1].text = $player.att
         states[2].text = $player.def
