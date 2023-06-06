@@ -76,7 +76,7 @@ proc setElmSettings (loc_img: Image, loc_imt: OrderedTableRef[string, Image], lo
   except: loc_img.loadFromFile("assets/q_mark.png")
   # ---- this section is not-prerended form
   loc_label.yTextAlign    = YTextAlign_Center
-  loc_label.text          = loc_text
+  loc_label.text          = " " & loc_text & " "
   health.value            = hp/100
   travel_cb.options       = travel_dt
   shop_cb.options         = shop_dt
@@ -127,6 +127,8 @@ proc setLayout (window: Window, layouts: OrderedTable[string, LayoutContainer], 
     layouts["hunt_p"].add(labels["hunt_p"])
     layouts["hunt_c"].add(labels["hunt_c"])
     hntn.add(layouts["hunt_b"])
+    layouts["hunt_b"].add(labels["hunt_b"])
+    layouts["hunt_b"].add(buttons["att"])
 
 proc updateWindow* (mode: int, window: Window, layouts: OrderedTable[string, LayoutContainer], labels: OrderedTable[string, Label],
                     main: LayoutContainer, left: LayoutContainer, right: LayoutContainer,

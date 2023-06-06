@@ -433,12 +433,15 @@ else:
   var health    = newProgressBar()
   var shop_bt   = newButton("Buy the item")
   var hunt_bt   = newButton("Hunt")
+  var att_bt    = newButton("Attack")
   var flee_bt   = newButton("Flee")
   var travel_bt = newButton("Travel")
   var travel_cb = newComboBox(player.loc.roadsData()[1])
   var shop_cb   = newComboBox(player.loc.shopData()[1])
-  var hnta_lab  = newLabel(" ")
-  var hntc_lab  = newLabel(" ")
+  var hnta_lab  = newLabel(" ")    # hunt section: attack (player)
+  var hntc_lab  = newLabel(" ")                  # attack (creature)
+  var hntb_lab  = newLabel(" ")                  # info   (beast name)
+  var hntb_hp   = newProgressBar()               # health (beast)
   var save_txt  = newTextBox()
   var save_bt   = newButton("Save") # up to change when it's overwrite
   var load_bt   = newButton("Load")
@@ -459,10 +462,10 @@ else:
         else: shop_bt.enabled = false
       if mode == 0 or mode == 2:
         if player.loc.beasts().len > 0:
-          if player.hunt: travel_bt.enabled = false; save_bt.enabled = false; flee_bt.enabled = true;  hunt_bt.enabled = false
-          else:           travel_bt.enabled = true;  save_bt.enabled = true;  flee_bt.enabled = false; hunt_bt.enabled = true
+          if player.hunt: travel_bt.enabled = false; save_bt.enabled = false; flee_bt.enabled = true;  hunt_bt.enabled = false; att_bt.enabled = true
+          else:           travel_bt.enabled = true;  save_bt.enabled = true;  flee_bt.enabled = false; hunt_bt.enabled = true;  att_bt.enabled = false
         else:
-          travel_bt.enabled = true; save_bt.enabled = true; hunt_bt.enabled = false; flee_bt.enabled = false
+          travel_bt.enabled = true; save_bt.enabled = true; hunt_bt.enabled = false; flee_bt.enabled = false; att_bt.enabled = false
       if mode == 0 or mode == 3:
         states[0].text = $player.money
         states[1].text = $player.att
@@ -479,7 +482,8 @@ else:
                                "hunt_c": hntc,
                                "hunt_b": hntb}.toOrderedTable,
                    labels   = {"hunt_p": hnta_lab,
-                               "hunt_c": hntc_lab}.toOrderedTable,
+                               "hunt_c": hntc_lab,
+                               "hunt_b": hntb_lab}.toOrderedTable,
                    main     = main,
                    left     = left,
                    right    = right,
@@ -500,6 +504,7 @@ else:
                    buttons   = {"travel": travel_bt,
                                 "shop":   shop_bt,
                                 "hunt":   hunt_bt,
+                                "att":    att_bt,
                                 "flee":   flee_bt,
                                 "save":   save_bt,
                                 "load":   load_bt}.toOrderedTable,
@@ -535,11 +540,13 @@ else:
   hunt_bt.onClick = proc (event: ClickEvent) =
     player.crea = some(sample(player.loc.beasts()))
     player.hunt = true
+    hntb_lab.text = player.crea.get.name
     updateStates(mode=2)
 
   flee_bt.onClick = proc (event: ClickEvent) =
     player.crea = none(Beast)
     player.hunt = false
+    hntb_lab.text = " "
     updateStates(mode=2)
 
   save_txt.onTextChange = proc (event: TextChangeEvent) =
