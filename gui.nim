@@ -128,6 +128,7 @@ proc setLayout (window: Window, layouts: OrderedTable[string, LayoutContainer], 
     layouts["hunt_c"].add(labels["hunt_c"])
     hntn.add(layouts["hunt_b"])
     layouts["hunt_b"].add(labels["hunt_b"])
+    layouts["hunt_b"].add(labels["hunt_h"])
     layouts["hunt_b"].add(buttons["att"])
 
 proc updateWindow* (mode: int, window: Window, layouts: OrderedTable[string, LayoutContainer], labels: OrderedTable[string, Label],

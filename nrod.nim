@@ -441,11 +441,18 @@ else:
   var hnta_lab  = newLabel(" ")    # hunt section: attack (player)
   var hntc_lab  = newLabel(" ")                  # attack (creature)
   var hntb_lab  = newLabel(" ")                  # info   (beast name)
-  var hntb_hp   = newProgressBar()               # health (beast)
+  var hntb_hp   = newLabel(" ")                  # health (beast)
   var save_txt  = newTextBox()
   var save_bt   = newButton("Save") # up to change when it's overwrite
   var load_bt   = newButton("Load")
   var load_cb   = newComboBox(saveBrowse())
+
+  proc guiDeath() =
+    travel_bt.enabled = false
+    save_bt.enabled   = false
+    hunt_bt.enabled   = false
+    shop_bt.enabled   = false
+    loc_label.text    = "You are dead"
 
   proc updateStates(mode: int = 0) =
       # MODES
@@ -470,6 +477,17 @@ else:
         states[0].text = $player.money
         states[1].text = $player.att
         states[2].text = $player.def
+      if player.hp < 0:
+        guiDeath()
+
+  proc endFight() =
+      player.crea = none(Beast)
+      player.hunt = false
+      hnta_lab.text = " "
+      hntc_lab.text = " "
+      hntb_lab.text = " "
+      hntb_hp.text  = " "
+      updateStates(mode=3)
 
   proc updateWindowRef(mode: int = 1) = # put there to not clutter the code with all arguments over and over
       updateWindow(mode     = mode,       # 0 is initial, 1 is update (default), 2 is minor update
@@ -483,7 +501,8 @@ else:
                                "hunt_b": hntb}.toOrderedTable,
                    labels   = {"hunt_p": hnta_lab,
                                "hunt_c": hntc_lab,
-                               "hunt_b": hntb_lab}.toOrderedTable,
+                               "hunt_b": hntb_lab,
+                               "hunt_h": hntb_hp}.toOrderedTable,
                    main     = main,
                    left     = left,
                    right    = right,
@@ -535,18 +554,35 @@ else:
   shop_bt.onClick = proc (event: ClickEvent) =
     if shop_cb.index >= 0:
       discard player.buy(itemBrowse(player.loc.shopData()[0][shop_cb.index]))
+      updateStates(mode=3)
     updateStates(mode=1)
 
   hunt_bt.onClick = proc (event: ClickEvent) =
     player.crea = some(sample(player.loc.beasts()))
     player.hunt = true
     hntb_lab.text = player.crea.get.name
+    hntb_hp.text  = "» " & $player.crea.get.hp & " «"
+    updateStates(mode=2)
+
+  att_bt.onClick = proc (event: ClickEvent) =
+    var mt = player.crea.get.att + rand(3..5)
+    var pt = player.att  + rand(3..5)
+    player.hp          -= mt
+    player.crea.get.hp -= pt
+    hnta_lab.text = "[ " & $pt & " >>"
+    hntc_lab.text = "<< " & $mt & " ]"
+    health.value  = player.hp/100
+    hntb_hp.text  = "» " & $player.crea.get.hp & " «"
+    if player.crea.get.hp < 1:
+      var money = rand(10..20)
+      player.money += money
+      endFight()
+    if player.hp < 1:
+      endFight()
     updateStates(mode=2)
 
   flee_bt.onClick = proc (event: ClickEvent) =
-    player.crea = none(Beast)
-    player.hunt = false
-    hntb_lab.text = " "
+    endFight()
     updateStates(mode=2)
 
   save_txt.onTextChange = proc (event: TextChangeEvent) =
