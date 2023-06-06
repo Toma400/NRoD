@@ -420,7 +420,6 @@ else:
   var hntb   = newLayoutContainer(Layout_Horizontal) # hunt beast info
 
   # Elements
-  var loc_img = newImage()
   # --- prerendering of images ---
   var loc_imt = newOrderedTable[string, Image]()
   for loc in locations:
@@ -516,9 +515,6 @@ else:
                    actn     = actn,
                    shpn     = shpn,
                    hntn     = hntn,
-                   loc_img   = loc_img,
-                   loc_imt   = loc_imt,
-                   loc_uid   = player.loc.uid,
                    loc_label = loc_label,
                    loc_text  = player.loc.name,
                    states    = states,
@@ -544,13 +540,13 @@ else:
 
   left.onDraw = proc (event: DrawEvent) =
     let canvas = event.control.canvas
-    canvas.drawImage(loc_img, x=returnCell(0, "X"), #loc_imt[player.loc.uid]
-                              y=returnCell(0, "Y"),
-                              width=(w_x/2).int)
+    canvas.drawImage(loc_imt[player.loc.uid], x=returnCell(0, "X"),
+                                              y=returnCell(0, "Y"),
+                                              width=(w_x/2).int)
 
   travel_bt.onClick = proc (event: ClickEvent) =
     player.loc = locationBrowse(player.loc.roadsData()[0][travel_cb.index])
-    updateWindowRef()
+    updateWindowRef(mode=2)
 
   shop_cb.onChange = proc (event: ComboBoxChangeEvent) =
     updateStates(mode=1)
@@ -599,7 +595,7 @@ else:
 
   load_bt.onClick = proc (event: ClickEvent) =
     player = load(load_cb.value, player)
-    updateWindowRef()
+    updateWindowRef(mode=2)
 
   window.show()
   app.run()
