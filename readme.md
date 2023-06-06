@@ -41,4 +41,4 @@ look into code, but copyright of code and assets belongs to its creators.
 
 Creators:
 - [Toma400](https://github.com/Toma400) (code)
-- [Skeletontonguedworld](https://github.com/skeletontonguedworld) (concepts)
+- [Skeletontonguedworld](https://github.com/skeletontonguedworld) (art)
