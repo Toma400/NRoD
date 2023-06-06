@@ -15,7 +15,7 @@ import os
 # ---
 # (c) 2023 Tomasz Stępień, All Rights Reserved
 #----------------------------------------------
-let nrod_v   = "0.3" # version
+let nrod_v   = "0.4" # version
 #----------------------------------------------
 let args     = os.commandLineParams()
 var terminal = "-terminal" in args
@@ -553,6 +553,7 @@ else:
     updateStates(mode=2)
 
   att_bt.onClick = proc (event: ClickEvent) =
+    att_bt.enabled = false
     var mt = player.crea.get.att + rand(3..5)
     var pt = player.att  + rand(3..5)
     player.hp          -= mt

@@ -72,7 +72,7 @@ proc beasts*(loc: Location): seq[Beast] =
   else: return @[]
 
 # Item Effects Registry
-proc use(player: var Player, item: Item) =
+proc use*(player: var Player, item: Item) =
   if item.eff:
     if   item.uid == ItemSmallHealingPotion().uid:  player.hp = player.hp + 15
     elif item.uid == ItemMediumHealingPotion().uid: player.hp = player.hp + 30
