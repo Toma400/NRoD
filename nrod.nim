@@ -83,10 +83,13 @@ type Beast = object
   hp:   int
   att:  int
   def:  int
+  rew:  int
 #-----------------
 # You can add new beasts here (used in **Location in 'beasts' list)
 proc BeastGhoul(): Beast =
-  return Beast(name: "Ghoul", hp: rand(30..50), att: rand(1..5), def: rand(1..3))
+  return Beast(name: "Ghoul", hp: rand(30..50), att: rand(1..5), def: rand(1..3), rew: rand(10..20))
+proc BeastIrradiatedRat(): Beast =
+  return Beast(name: "Irradiated Rat",   hp: rand(10..20), att: rand(1..3), def: rand(2..4), rew: rand(5..10))
 
 # <--- Location --->
 type Location = object
@@ -107,9 +110,13 @@ proc LocationWastes(): Location =
   return Location(name: "Wastes",
                   uid: "nr_wastes",
                   is_shop: false)
+proc LocationNomadCampRoad*(): Location =
+  return Location(name: "Nomad Camp Road",
+                  uid:  "nr_nomad_camp_road",
+                  is_shop: false)
 
 # location registry (should be filled for save system)
-let locations = @[LocationNomadCamp(), LocationNomadCampMarket(), LocationWastes()]
+let locations = @[LocationNomadCamp(), LocationNomadCampMarket(), LocationWastes(), LocationNomadCampRoad()]
 
 # shops in locations
 proc shop(loc: Location): seq[Item] =
@@ -126,9 +133,10 @@ proc shopData(loc: Location): seq[seq[string]] =
 
 # travelling roads to locations
 proc roads(loc: Location): seq[Location] =
-  if   loc.uid == LocationNomadCamp().uid:       return @[LocationNomadCampMarket(), LocationWastes()]
+  if   loc.uid == LocationNomadCamp().uid:       return @[LocationNomadCampMarket(), LocationNomadCampRoad()]
+  elif loc.uid == LocationNomadCampRoad().uid:   return @[LocationWastes(), LocationNomadCamp()]
   elif loc.uid == LocationNomadCampMarket().uid: return @[LocationNomadCamp()]
-  elif loc.uid == LocationWastes().uid:          return @[LocationNomadCamp()]
+  elif loc.uid == LocationWastes().uid:          return @[LocationNomadCampRoad()]
   else: return @[]
 
 proc roadsData(loc: Location): seq[seq[string]] =
@@ -141,7 +149,8 @@ proc roadsData(loc: Location): seq[seq[string]] =
 
 # list of beasts in locations
 proc beasts(loc: Location): seq[Beast] =
-  if loc.uid == LocationWastes().uid: return @[BeastGhoul()]
+  if   loc.uid == LocationWastes().uid:        return @[BeastGhoul()]
+  elif loc.uid == LocationNomadCampRoad().uid: return @[BeastIrradiatedRat()]
   else: return @[]
 
 # <--- Player --->
@@ -245,7 +254,7 @@ proc shop(player: var Player) =
 # FIGHT
 #==============================
 proc huntRew(monster: var Beast): int =
-  return rand(10..20) + (monster.hp/10).int
+  return monster.rew + (monster.hp/10).int
 
 proc hunt(player: var Player) =
   var monster = sample(player.loc.beasts())
@@ -394,6 +403,7 @@ else:
   app.init()
 
   var window = newWindow("Near Risk of Death")
+  var saves  = saveBrowse()
 
   # Containers
   var main   = newLayoutContainer(Layout_Horizontal)
@@ -441,7 +451,7 @@ else:
   var save_txt  = newTextBox()
   var save_bt   = newButton("Save") # up to change when it's overwrite
   var load_bt   = newButton("Load")
-  var load_cb   = newComboBox(saveBrowse())
+  var load_cb   = newComboBox(saves)
 
   proc guiDeath() =
     travel_bt.enabled = false
@@ -474,6 +484,9 @@ else:
         states[0].text = $player.money
         states[1].text = $player.att
         states[2].text = $player.def
+      if mode == 0 or mode == 4:
+        saves = saveBrowse()
+        load_cb.options = saves
       if player.hp < 0:
         guiDeath()
 
@@ -527,8 +540,7 @@ else:
                    shop_cb   = shop_cb,
                    shop_dt   = player.loc.shopData()[1],
                    save_txt  = save_txt,
-                   load_cb   = load_cb,
-                   load_data = saveBrowse())
+                   load_cb   = load_cb)
       updateStates(mode=0)
 
   updateWindowRef(mode=0)
@@ -582,16 +594,18 @@ else:
     updateStates(mode=2)
 
   save_txt.onTextChange = proc (event: TextChangeEvent) =
-    if save_txt.text in saveBrowse(): save_bt.text = "Overwrite"
-    else:                             save_bt.text = "Save"
+    if save_txt.text in saves: save_bt.text = "Overwrite"
+    else:                      save_bt.text = "Save"
 
   save_bt.onClick = proc (event: ClickEvent) =
     if player.hp > 0:
       save(save_txt.text, player)
       save_bt.text = "Saved!"
+      updateStates(mode=4)
     else:
       player = playerNew()
       updateWindowRef(mode=2)
+      save_bt.text = "Save"
 
   load_bt.onClick = proc (event: ClickEvent) =
     player = load(load_cb.value, player)

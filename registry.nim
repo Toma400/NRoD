@@ -30,7 +30,9 @@ let items* = @[ItemMachete(), ItemSturdyTunic(), ItemSmallHealingPotion(), ItemM
 #=========================================================================================================
 # Procedure Builders
 proc BeastGhoul*(): Beast =
-  return Beast(name: "Ghoul", hp: rand(30..50), att: rand(1..5), def: rand(1..3))
+  return Beast(name: "Ghoul", hp: rand(30..50), att: rand(1..5), def: rand(1..3), rew: rand(10..20))
+proc BeastIrradiatedRat*(): Beast =
+  return Beast(name: "Irradiated Rat", hp: rand(10..20), att: rand(1..3), def: rand(2..4), rew: rand(5..10))
 
 ##########################################################################################################
 # LOCATIONS #
@@ -52,9 +54,13 @@ proc LocationWastes*(): Location =
   return Location(name: "Wastes",
                   uid: "nr_wastes",
                   is_shop: false)
+proc LocationNomadCampRoad*(): Location =
+  return Location(name: "Nomad Camp Road",
+                  uid:  "nr_nomad_camp_road",
+                  is_shop: false)
 
 # Location Registry
-let locations* = @[LocationNomadCamp(), LocationNomadCampMarket(), LocationWastes()]
+let locations* = @[LocationNomadCamp(), LocationNomadCampMarket(), LocationWastes(), LocationNomadCampRoad()]
 
 # Shop Item Choice Registry
 proc shop*(loc: Location): seq[Item] =
@@ -63,14 +69,16 @@ proc shop*(loc: Location): seq[Item] =
 
 # Location Connections Registry
 proc roads*(loc: Location): seq[Location] =
-  if   loc.uid == LocationNomadCamp().uid:       return @[LocationNomadCampMarket(), LocationWastes()]
+  if   loc.uid == LocationNomadCamp().uid:       return @[LocationNomadCampMarket(), LocationNomadCampRoad()]
+  elif loc.uid == LocationNomadCampRoad().uid:   return @[LocationWastes(), LocationNomadCamp()]
   elif loc.uid == LocationNomadCampMarket().uid: return @[LocationNomadCamp()]
-  elif loc.uid == LocationWastes().uid:          return @[LocationNomadCamp()]
+  elif loc.uid == LocationWastes().uid:          return @[LocationNomadCampRoad()]
   else: return @[]
 
 # Beasts Fill Registry
 proc beasts*(loc: Location): seq[Beast] =
-  if loc.uid == LocationWastes().uid: return @[BeastGhoul()]
+  if   loc.uid == LocationWastes().uid:        return @[BeastGhoul()]
+  elif loc.uid == LocationNomadCampRoad().uid: return @[BeastIrradiatedRat()]
   else: return @[]
 
 # Item Effects Registry

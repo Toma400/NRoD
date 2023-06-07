@@ -15,6 +15,7 @@ type Beast* = object
   hp*:   int
   att*:  int
   def*:  int
+  rew*:  int
 
 # <--- Location --->
 type Location* = object

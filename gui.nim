@@ -61,16 +61,13 @@ proc setMnSettings (mode: int, window: Window, layouts: OrderedTable[string, Lay
     window.iconPath = "assets/nr_nomad_camp.png"
 
 proc setElmSettings (mode: int, loc_label: Label, loc_text: string, health: ProgressBar, hp: int,
-                     travel_cb: ComboBox, travel_dt: seq[string], shop_cb: ComboBox, shop_dt: seq[string],
-                     load_cb: ComboBox, load_data: seq[string]) =
+                     travel_cb: ComboBox, travel_dt: seq[string], shop_cb: ComboBox, shop_dt: seq[string]) =
   if mode == 0:
     loc_label.yTextAlign  = YTextAlign_Center
   loc_label.text          = " " & loc_text & " "
   health.value            = hp/100
   travel_cb.options       = travel_dt
   shop_cb.options         = shop_dt
-  if mode != 2:
-    load_cb.options       = load_data
 
 proc setLayout (window: Window, layouts: OrderedTable[string, LayoutContainer], labels: OrderedTable[string, Label],
                 main: LayoutContainer, left: LayoutContainer, right: LayoutContainer,
@@ -127,7 +124,7 @@ proc updateWindow* (mode: int, window: Window, layouts: OrderedTable[string, Lay
                     loc_label: Label, loc_text: string,
                     states: seq[Label], health: ProgressBar, hp: int, buttons: OrderedTable[string, Button],
                     travel_cb: ComboBox, travel_dt: seq[string], shop_cb: ComboBox, shop_dt: seq[string],
-                    save_txt: TextBox, load_cb: ComboBox, load_data: seq[string]) =
+                    save_txt: TextBox, load_cb: ComboBox) =
 
   setMnSettings(mode    = mode,
                 window  = window,
@@ -148,9 +145,7 @@ proc updateWindow* (mode: int, window: Window, layouts: OrderedTable[string, Lay
                  travel_cb = travel_cb,
                  travel_dt = travel_dt,
                  shop_cb   = shop_cb,
-                 shop_dt   = shop_dt,
-                 load_cb   = load_cb,
-                 load_data = load_data)
+                 shop_dt   = shop_dt)
   if mode == 0: # 0 is set as initial, 1 is for update
     setLayout(window  = window,
               layouts = layouts,
