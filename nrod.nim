@@ -15,7 +15,7 @@ import os
 # ---
 # (c) 2023 Tomasz Stępień, All Rights Reserved
 #----------------------------------------------
-let nrod_v   = "0.4" # version
+let nrod_v   = "0.5" # version
 #----------------------------------------------
 let args     = os.commandLineParams()
 var terminal = "-terminal" in args
@@ -95,25 +95,20 @@ proc BeastIrradiatedRat(): Beast =
 type Location = object
   name:    string
   uid:     string      # unique ID (used for saves)
-  is_shop: bool
 #-----------------
 # You can add new locations here (used in *Travel in initial destination list)
 proc LocationNomadCamp(): Location =
   return Location(name: "Nomad Camp",
-                  uid: "nr_nomad_camp",
-                  is_shop: false)
+                  uid: "nr_nomad_camp")
 proc LocationNomadCampMarket(): Location =
   return Location(name: "Nomad Camp Market",
-                  uid: "nr_nomad_camp_market",
-                  is_shop: true)
+                  uid: "nr_nomad_camp_market")
 proc LocationWastes(): Location =
   return Location(name: "Wastes",
-                  uid: "nr_wastes",
-                  is_shop: false)
-proc LocationNomadCampRoad*(): Location =
+                  uid: "nr_wastes")
+proc LocationNomadCampRoad(): Location =
   return Location(name: "Nomad Camp Road",
-                  uid:  "nr_nomad_camp_road",
-                  is_shop: false)
+                  uid:  "nr_nomad_camp_road")
 
 # location registry (should be filled for save system)
 let locations = @[LocationNomadCamp(), LocationNomadCampMarket(), LocationWastes(), LocationNomadCampRoad()]
@@ -147,10 +142,17 @@ proc roadsData(loc: Location): seq[seq[string]] =
     loc_names.add(locg.name)
   return @[loc_uids, loc_names]
 
+proc ampl(bt: Table[Beast, int]): seq[Beast] =
+  var ret = newSeq[Beast](0)
+  for b, n in bt.pairs:
+    for _ in 0..n:
+      ret.add(b)
+  return ret
+
 # list of beasts in locations
 proc beasts(loc: Location): seq[Beast] =
-  if   loc.uid == LocationWastes().uid:        return @[BeastGhoul()]
-  elif loc.uid == LocationNomadCampRoad().uid: return @[BeastIrradiatedRat()]
+  if   loc.uid == LocationWastes().uid:        return ampl({BeastGhoul(): 0}.toTable)
+  elif loc.uid == LocationNomadCampRoad().uid: return ampl({BeastIrradiatedRat(): 0}.toTable)
   else: return @[]
 
 # <--- Player --->
@@ -363,7 +365,7 @@ var player = playerNew()
 if terminal:
   while true:
     if player.hp <= 0: death()
-    let can_shop   = player.loc.is_shop
+    let can_shop   = player.loc.shop().len > 0
     let can_travel = player.loc.roads().len > 0
     let can_hunt   = player.loc.beasts().len > 0
 
@@ -378,7 +380,7 @@ if terminal:
     if can_travel: echo "Press 3 to travel"
     #---------------------------
     var input = readLine(stdin)
-    if input == $1 and player.loc.is_shop:
+    if input == $1 and can_shop:
       shop(player)
     elif input == $2:
       hunt(player)
