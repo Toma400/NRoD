@@ -36,9 +36,9 @@ var items* = @[ItemMachete(), ItemSturdyTunic(), ItemSmallHealingPotion(), ItemM
 proc BeastGhoul*(): Beast =
   return Beast(name: "Ghoul", hp: rand(30..50), att: rand(1..5), def: rand(1..3), rew: rand(10..20))
 proc BeastIrradiatedRat*(): Beast =
-  return Beast(name: "Irradiated Rat", hp: rand(10..20), att: rand(1..3), def: rand(2..4), rew: rand(5..10))
+  return Beast(name: "Irradiated Rat", hp: rand(14..20), att: rand(1..3), def: rand(2..4), rew: rand(4..10))
 proc BeastRatKing*(): Beast =
-  return Beast(name: "Rat King", hp: rand(70..80), att: rand(1..9), def: rand(2..4), rew: rand(40..90))
+  return Beast(name: "Rat King", hp: rand(70..80), att: rand(2..9), def: rand(2..4), rew: rand(40..90))
 
 ##########################################################################################################
 # LOCATIONS #
