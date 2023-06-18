@@ -1,4 +1,5 @@
 import std/options
+import std/tables
 
 # <--- Item --->
 type Item* = object
@@ -7,7 +8,7 @@ type Item* = object
   cost*: int
   att*:  int
   def*:  int
-  eff*:  bool
+  eff*:  Table[string, int]
 
 # <--- Beast --->
 type Beast* = object

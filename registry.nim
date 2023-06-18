@@ -12,18 +12,18 @@ import aspects
 #=========================================================================================================
 # Procedure Builders
 proc ItemMachete*(): Item =
-  return Item(name: "Machete",               uid: "nr_machete",               cost: 20, att: 5, def: 0, eff: false)
+  return Item(name: "Machete",               uid: "nr:machete",               cost: 20, att: 5, def: 0, eff: {}.toTable)
 proc ItemSturdyTunic*(): Item =
-  return Item(name: "Sturdy Tunic",          uid: "nr_sturdy_tunic",          cost: 30, att: 0, def: 3, eff: false)
+  return Item(name: "Sturdy Tunic",          uid: "nr:sturdy_tunic",          cost: 30, att: 0, def: 3, eff: {}.toTable)
 proc ItemSmallHealingPotion*(): Item =
-  return Item(name: "Small Healing Potion",  uid: "nr_small_healing_potion",  cost: 9,  att: 0, def: 0, eff: true)
+  return Item(name: "Small Healing Potion",  uid: "nr:small_healing_potion",  cost: 9,  att: 0, def: 0, eff: {"heal": 15}.toTable)
 proc ItemMediumHealingPotion*(): Item =
-  return Item(name: "Medium Healing Potion", uid: "nr_medium_healing_potion", cost: 15, att: 0, def: 0, eff: true)
+  return Item(name: "Medium Healing Potion", uid: "nr:medium_healing_potion", cost: 15, att: 0, def: 0, eff: {"heal": 30}.toTable)
 proc ItemLargeHealingPotion*(): Item =
-  return Item(name: "Large Healing Potion",  uid: "nr_large_healing_potion",  cost: 27, att: 0, def: 0, eff: true)
+  return Item(name: "Large Healing Potion",  uid: "nr:large_healing_potion",  cost: 27, att: 0, def: 0, eff: {"heal": 60}.toTable)
 
 # Item Registry
-let items* = @[ItemMachete(), ItemSturdyTunic(), ItemSmallHealingPotion(), ItemMediumHealingPotion(), ItemLargeHealingPotion()]
+var items* = @[ItemMachete(), ItemSturdyTunic(), ItemSmallHealingPotion(), ItemMediumHealingPotion(), ItemLargeHealingPotion()]
 
 ##########################################################################################################
 # BEASTS #
@@ -49,26 +49,28 @@ proc BeastRatKing*(): Beast =
 # Procedure Builders
 proc LocationNomadCamp*(): Location =
   return Location(name: "Nomad Camp",
-                  uid: "nr_nomad_camp")
+                  uid: "nr:nomad_camp")
 proc LocationNomadCampMarket*(): Location =
   return Location(name: "Nomad Camp Market",
-                  uid: "nr_nomad_camp_market")
+                  uid: "nr:nomad_camp_market")
 proc LocationWastes*(): Location =
   return Location(name: "Wastes",
-                  uid: "nr_wastes")
+                  uid: "nr:wastes")
 proc LocationNomadCampRoad*(): Location =
   return Location(name: "Nomad Camp Road",
-                  uid:  "nr_nomad_camp_road")
+                  uid:  "nr:nomad_camp_road")
 
 # Location Registry
 let locations* = @[LocationNomadCamp(), LocationNomadCampMarket(), LocationWastes(), LocationNomadCampRoad()]
+# TODO:
+var location_market_shop* = @[ItemMachete(), ItemSturdyTunic(), ItemSmallHealingPotion(), ItemMediumHealingPotion(), ItemLargeHealingPotion()]
 
 ##########################################################################################################
 # PROCEDURES #
 ##########################################################################################################
 # Shop Item Choice Registry
 proc shop*(loc: Location): seq[Item] =
-  if loc.uid == LocationNomadCampMarket().uid: return @[ItemMachete(), ItemSturdyTunic(), ItemSmallHealingPotion(), ItemMediumHealingPotion(), ItemLargeHealingPotion()]
+  if loc.uid == LocationNomadCampMarket().uid: return location_market_shop
   else: return @[]
 
 # Location Connections Registry
@@ -90,17 +92,16 @@ proc ampl(bt: Table[Beast, int]): seq[Beast] =
 
 # Beasts Fill Registry
 proc beasts*(loc: Location): seq[Beast] =
-  if   loc.uid == LocationWastes().uid:        return ampl({BeastGhoul(): 0}.toTable)
+  if   loc.uid == LocationWastes().uid:        return ampl({BeastGhoul(): 1}.toTable)
   elif loc.uid == LocationNomadCampRoad().uid: return ampl({BeastIrradiatedRat(): 50, BeastRatKing(): 1}.toTable)
   else: return @[]
 
 # Item Effects Registry
 proc use*(player: var Player, item: Item) =
-  if item.eff:
-    if   item.uid == ItemSmallHealingPotion().uid:  player.hp = player.hp + 15
-    elif item.uid == ItemMediumHealingPotion().uid: player.hp = player.hp + 30
-    elif item.uid == ItemLargeHealingPotion().uid:  player.hp = player.hp + 60
-  if player.hp > 100: player.hp = 100 # fixing overvaluing
+  if "heal" in item.eff.keys:
+    player.hp += item.eff["heal"]
+    if player.hp > 100:
+      player.hp = 100 # fixing overvaluing
 
 ##########################################################################################################
 # BUILDERS & UTILS #

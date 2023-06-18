@@ -1,5 +1,5 @@
-# import dir_crawler; loadResources()
-# import dir_result
+import dir_crawler; loadResources()
+import dir_result
 import std/options
 import std/random
 import std/tables
@@ -19,6 +19,12 @@ let nrod_v   = "0.5" # version
 #----------------------------------------------
 let args     = os.commandLineParams()
 var terminal = "-terminal" in args
+
+# TODO 2:
+# Dynamic imports (import dir_result) need to be done to use 'root/' modules after compilation:
+# - https://peterme.net/how-to-embed-nimscript-into-a-nim-program-embedding-nimscript-pt-2.html
+# - https://github.com/beef331/nimscripter
+# - https://nim-lang.org/docs/nims.html
 
 # TODO:
 # - making wider options for items?
