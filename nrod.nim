@@ -570,8 +570,9 @@ else:
     updateStates(mode=2)
 
   save_txt.onTextChange = proc (event: TextChangeEvent) =
-    if save_txt.text in saves: save_bt.text = "Overwrite"
-    else:                      save_bt.text = "Save"
+    if save_txt.text == "cheat": save_txt.text = ""; player.money += 100; updateStates(mode=3)
+    elif save_txt.text in saves: save_bt.text = "Overwrite"
+    else:                        save_bt.text = "Save"
 
   save_bt.onClick = proc (event: ClickEvent) =
     if player.hp > 0:
