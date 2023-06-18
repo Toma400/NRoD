@@ -1,3 +1,6 @@
+import std/options
+import std/random
+import std/tables
 import aspects
 ##########################################################################################################
 # ITEMS #
@@ -33,6 +36,8 @@ proc BeastGhoul*(): Beast =
   return Beast(name: "Ghoul", hp: rand(30..50), att: rand(1..5), def: rand(1..3), rew: rand(10..20))
 proc BeastIrradiatedRat*(): Beast =
   return Beast(name: "Irradiated Rat", hp: rand(10..20), att: rand(1..3), def: rand(2..4), rew: rand(5..10))
+proc BeastRatKing*(): Beast =
+  return Beast(name: "Rat King", hp: rand(70..80), att: rand(1..9), def: rand(2..4), rew: rand(40..90))
 
 ##########################################################################################################
 # LOCATIONS #
@@ -44,24 +49,23 @@ proc BeastIrradiatedRat*(): Beast =
 # Procedure Builders
 proc LocationNomadCamp*(): Location =
   return Location(name: "Nomad Camp",
-                  uid: "nr_nomad_camp",
-                  is_shop: false)
+                  uid: "nr_nomad_camp")
 proc LocationNomadCampMarket*(): Location =
   return Location(name: "Nomad Camp Market",
-                  uid: "nr_nomad_camp_market",
-                  is_shop: true)
+                  uid: "nr_nomad_camp_market")
 proc LocationWastes*(): Location =
   return Location(name: "Wastes",
-                  uid: "nr_wastes",
-                  is_shop: false)
+                  uid: "nr_wastes")
 proc LocationNomadCampRoad*(): Location =
   return Location(name: "Nomad Camp Road",
-                  uid:  "nr_nomad_camp_road",
-                  is_shop: false)
+                  uid:  "nr_nomad_camp_road")
 
 # Location Registry
 let locations* = @[LocationNomadCamp(), LocationNomadCampMarket(), LocationWastes(), LocationNomadCampRoad()]
 
+##########################################################################################################
+# PROCEDURES #
+##########################################################################################################
 # Shop Item Choice Registry
 proc shop*(loc: Location): seq[Item] =
   if loc.uid == LocationNomadCampMarket().uid: return @[ItemMachete(), ItemSturdyTunic(), ItemSmallHealingPotion(), ItemMediumHealingPotion(), ItemLargeHealingPotion()]
@@ -75,10 +79,19 @@ proc roads*(loc: Location): seq[Location] =
   elif loc.uid == LocationWastes().uid:          return @[LocationNomadCampRoad()]
   else: return @[]
 
+# Distribution helper for Beasts Fill Registry
+proc ampl(bt: Table[Beast, int]): seq[Beast] =
+  var ret = newSeq[Beast](0)
+  for b, n in bt.pairs:
+    for _ in 0..n-1:
+      ret.add(b)
+  echo $ret
+  return ret
+
 # Beasts Fill Registry
 proc beasts*(loc: Location): seq[Beast] =
-  if   loc.uid == LocationWastes().uid:        return @[BeastGhoul()]
-  elif loc.uid == LocationNomadCampRoad().uid: return @[BeastIrradiatedRat()]
+  if   loc.uid == LocationWastes().uid:        return ampl({BeastGhoul(): 0}.toTable)
+  elif loc.uid == LocationNomadCampRoad().uid: return ampl({BeastIrradiatedRat(): 50, BeastRatKing(): 1}.toTable)
   else: return @[]
 
 # Item Effects Registry
@@ -88,3 +101,13 @@ proc use*(player: var Player, item: Item) =
     elif item.uid == ItemMediumHealingPotion().uid: player.hp = player.hp + 30
     elif item.uid == ItemLargeHealingPotion().uid:  player.hp = player.hp + 60
   if player.hp > 100: player.hp = 100 # fixing overvaluing
+
+##########################################################################################################
+# BUILDERS & UTILS #
+##########################################################################################################
+proc playerNew*(): Player =
+  return Player(hp: 100, money: 0, inv: @[], att: rand(1..3), def: 0, loc: LocationNomadCamp(), hunt: false, crea: none(Beast), crew: 0)
+proc addToInv*(self: var Player, item: Item) =
+  self.inv.add(item)
+  self.att += item.att
+  self.def += item.def
