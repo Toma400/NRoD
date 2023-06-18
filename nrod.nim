@@ -324,7 +324,7 @@ else:
   var loc_imt = newOrderedTable[string, Image]()
   for loc in locations:
     var tmp_img = newImage()
-    try:    tmp_img.loadFromFile("assets/" & loc.uid & ".png")
+    try:    tmp_img.loadFromFile("assets/" & loc.uid.replace(":", "_") & ".png")
     except: tmp_img.loadFromFile("assets/q_mark.png")
     loc_imt[loc.uid] = tmp_img
 
