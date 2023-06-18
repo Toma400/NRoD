@@ -5,7 +5,7 @@ import std/random
 import std/tables
 import strutils
 # import registry
-# import aspects
+import aspects
 import nigui
 import gui
 import os
@@ -54,14 +54,6 @@ if terminal:
 #==============================
 
 # <--- Item --->
-type Item = object
-  name: string
-  uid:  string     # unique ID (used for saves)
-  cost: int
-  att:  int
-  def:  int
-  eff:  bool
-#-----------------
 # You can add new items here (used in *Shop in initial list of contents)
 proc ItemMachete(): Item =
   return Item(name: "Machete", uid: "nr_machete", cost: 20, att: 5, def: 0, eff: false)
@@ -78,24 +70,15 @@ proc ItemLargeHealingPotion(): Item =
 let items = @[ItemMachete(), ItemSturdyTunic(), ItemSmallHealingPotion(), ItemMediumHealingPotion(), ItemLargeHealingPotion()]
 
 # <--- Beast --->
-type Beast = object
-  name: string
-  hp:   int
-  att:  int
-  def:  int
-  rew:  int
-#-----------------
 # You can add new beasts here (used in **Location in 'beasts' list)
 proc BeastGhoul(): Beast =
   return Beast(name: "Ghoul", hp: rand(30..50), att: rand(1..5), def: rand(1..3), rew: rand(10..20))
 proc BeastIrradiatedRat(): Beast =
   return Beast(name: "Irradiated Rat",   hp: rand(10..20), att: rand(1..3), def: rand(2..4), rew: rand(5..10))
+proc BeastRatKing(): Beast =
+  return Beast(name: "Rat King", hp: rand(70..80), att: rand(1..9), def: rand(2..4), rew: rand(40..90))
 
 # <--- Location --->
-type Location = object
-  name:    string
-  uid:     string      # unique ID (used for saves)
-#-----------------
 # You can add new locations here (used in *Travel in initial destination list)
 proc LocationNomadCamp(): Location =
   return Location(name: "Nomad Camp",
@@ -147,25 +130,16 @@ proc ampl(bt: Table[Beast, int]): seq[Beast] =
   for b, n in bt.pairs:
     for _ in 0..n:
       ret.add(b)
+  echo $ret
   return ret
 
 # list of beasts in locations
 proc beasts(loc: Location): seq[Beast] =
   if   loc.uid == LocationWastes().uid:        return ampl({BeastGhoul(): 0}.toTable)
-  elif loc.uid == LocationNomadCampRoad().uid: return ampl({BeastIrradiatedRat(): 0}.toTable)
+  elif loc.uid == LocationNomadCampRoad().uid: return ampl({BeastIrradiatedRat(): 50, BeastIrradiatedRat(): 1}.toTable)
   else: return @[]
 
 # <--- Player --->
-type Player = object
-  hp:    int
-  money: int
-  inv:   seq[Item]
-  att:   int
-  def:   int
-  loc:   Location
-  hunt:  bool
-  crea:  Option[Beast]
-  crew:  int
 proc playerNew(): Player =
   return Player(hp: 100, money: 0, inv: @[], att: rand(1..3), def: 0, loc: LocationNomadCamp(), hunt: false, crea: none(Beast), crew: 0)
 proc addToInv(self: var Player, item: Item) =

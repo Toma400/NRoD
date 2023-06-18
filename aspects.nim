@@ -21,7 +21,6 @@ type Beast* = object
 type Location* = object
   name*:    string
   uid*:     string      # unique ID (used for saves)
-  is_shop*: bool
 
 # <--- Player --->
 type Player* = object
@@ -32,5 +31,5 @@ type Player* = object
   def*:   int
   loc*:   Location
   hunt*:  bool
-  crea*:  Option(Beast)
+  crea*:  Option[Beast]
   crew*:  int
