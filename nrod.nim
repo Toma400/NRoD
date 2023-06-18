@@ -116,8 +116,7 @@ proc buy(player: var Player, item: Item): BuyResult =
   if player.money >= item.cost:
     player.money -= item.cost
     addToInv(player, item)
-    if item.eff:
-      player.use(item)
+    player.use(item)
     return BOUGHT
   else:
     return BUY_FAILED

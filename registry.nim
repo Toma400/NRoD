@@ -1,3 +1,4 @@
+import std/sequtils
 import std/options
 import std/random
 import std/tables
@@ -12,9 +13,9 @@ import aspects
 #=========================================================================================================
 # Procedure Builders
 proc ItemMachete*(): Item =
-  return Item(name: "Machete",               uid: "nr:machete",               cost: 20, att: 5, def: 0, eff: {}.toTable)
+  return Item(name: "Machete",               uid: "nr:machete",               cost: 20, att: 5, def: 0, eff: {"": 0}.toTable)
 proc ItemSturdyTunic*(): Item =
-  return Item(name: "Sturdy Tunic",          uid: "nr:sturdy_tunic",          cost: 30, att: 0, def: 3, eff: {}.toTable)
+  return Item(name: "Sturdy Tunic",          uid: "nr:sturdy_tunic",          cost: 30, att: 0, def: 3, eff: {"": 0}.toTable)
 proc ItemSmallHealingPotion*(): Item =
   return Item(name: "Small Healing Potion",  uid: "nr:small_healing_potion",  cost: 9,  att: 0, def: 0, eff: {"heal": 15}.toTable)
 proc ItemMediumHealingPotion*(): Item =
@@ -98,7 +99,7 @@ proc beasts*(loc: Location): seq[Beast] =
 
 # Item Effects Registry
 proc use*(player: var Player, item: Item) =
-  if "heal" in item.eff.keys:
+  if "heal" in toSeq(item.eff.keys):
     player.hp += item.eff["heal"]
     if player.hp > 100:
       player.hp = 100 # fixing overvaluing
