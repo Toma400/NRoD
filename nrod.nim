@@ -1,5 +1,5 @@
 import dir_crawler; loadResources()
-import dir_result
+import nimscripter, dir_result # needs dynamic solution
 import std/options
 import std/random
 import std/tables
@@ -25,6 +25,9 @@ var terminal = "-terminal" in args
 # - https://peterme.net/how-to-embed-nimscript-into-a-nim-program-embedding-nimscript-pt-2.html
 # - https://github.com/beef331/nimscripter
 # - https://nim-lang.org/docs/nims.html
+# Let's go, more links:
+# - https://nim-lang.org/docs/dynlib.html (C/C++ bind) | .dll, .dynlib, .so
+# - https://github.com/beef331/wasm3       (WASM bind) | .wasm
 
 # TODO:
 # - making wider options for items?
